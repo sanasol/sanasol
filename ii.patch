@@ -1,0 +1,151 @@
+Index: conf/atcommand_athena.conf
+===================================================================
+--- conf/atcommand_athena.conf	(revision 14955)
++++ conf/atcommand_athena.conf	(working copy)
+@@ -46,6 +46,8 @@
+ // 0: normal player commands
+ // None for security purposes.
+ 
++sii: 0,0
++
+ //-------------------------
+ // 1: Super player commands
+
+Index: src/map/atcommand.c
+===================================================================
+--- src/map/atcommand.c	(revision 14955)
++++ src/map/atcommand.c	(working copy)
+@@ -8580,12 +8580,56 @@
+ 	return 0;
+ }
+ 
++/*==========================================
++ * @setiteminf - Make a consumable item infinite
++ * when a player use this item item will be not taken
++ *------------------------------------------*/
++ACMD_FUNC(setiteminf)
++{
++	int number = 0;
++	char item_name[100];
++	struct item_data *item_data;
++	nullpo_retr(-1, sd);
+ 
++	memset(item_name, '\0', sizeof(item_name));
++
++	if (!message || !*message || (
++		sscanf(message, "\"%99[^\"]\" %d", item_name, &number) < 1 &&
++		sscanf(message, "%99s %d", item_name, &number) < 1
++	)) {
++		clif_displaymessage(fd, "Please, enter an item name/id (usage: @item <item name or ID>");
++		return -1;
++	}
++
++	if ((item_data = itemdb_searchname(item_name)) == NULL &&
++	    (item_data = itemdb_exists(atoi(item_name))) == NULL)
++	{
++		clif_displaymessage(fd, msg_txt(19)); // Invalid item ID or name.
++		return -1;
++	}
++
++	if(item_data->flag.infusable > 0) {
++
++		clif_displaymessage(fd,"This item isn't a infinite usable item now");
++		item_data->flag.infusable = 0;
++
++	} else {
++
++		clif_displaymessage(fd,"This item is a infinite usable item now");
++		item_data->flag.infusable = 1;
++
++	}
++
++	return 0;
++}
++
++
+ /*==========================================
+  * atcommand_info[] structure definition
+  *------------------------------------------*/
+ 
+ AtCommandInfo atcommand_info[] = {
++	{ "sii",         99,99,      atcommand_setiteminf },
+ 	{ "rura",              40,40,     atcommand_mapmove },
+ 	{ "warp",              40,40,     atcommand_mapmove },
+ 	{ "mapmove",           40,40,     atcommand_mapmove }, // + /mm
+Index: src/map/itemdb.c
+===================================================================
+--- src/map/itemdb.c	(revision 14955)
++++ src/map/itemdb.c	(working copy)
+@@ -500,6 +500,28 @@
+ }
+ 
+ /*==========================================
++ * Бесконечный расход
++ *------------------------------------------*/
++static bool itemdb_read_iteminf(char* str[], int columns, int current)
++{// <nameid>
++	int nameid;
++	struct item_data *id;
++
++	nameid = atoi(str[0]);
++
++	if( ( id = itemdb_exists(nameid) ) == NULL )
++	{
++		ShowWarning("itemdb_read_iteminf: Invalid item id %d.\n", nameid);
++		return false;
++	}
++
++	ShowWarning("item_inf: inf item id %d.\n", nameid);
++		id->flag.infusable = 1;
++
++	return true;
++}
++
++/*==========================================
+  * read item group data
+  *------------------------------------------*/
+ static void itemdb_read_itemgroup_sub(const char* filename)
+@@ -1007,6 +1029,8 @@
+ 	sv_readdb(db_path, "item_trade.txt",   ',', 3, 3, -1,             &itemdb_read_itemtrade);
+ 	sv_readdb(db_path, "item_delay.txt",   ',', 2, 2, MAX_ITEMDELAYS, &itemdb_read_itemdelay);
+ 	sv_readdb(db_path, "item_buyingstore.txt", ',', 1, 1, -1,         &itemdb_read_buyingstore);
++	//Бесконечный расход
++	sv_readdb(db_path, "item_inf.txt",   ',', 1, 1, -1,               &itemdb_read_iteminf);
+ }
+ 
+ /*==========================================
+Index: src/map/itemdb.h
+===================================================================
+--- src/map/itemdb.h	(revision 14955)
++++ src/map/itemdb.h	(working copy)
+@@ -77,6 +77,7 @@
+ 		unsigned trade_restriction : 7;	//Item restrictions mask [Skotlex]
+ 		unsigned autoequip: 1;
+ 		unsigned buyingstore : 1;
++		unsigned infusable: 1;
+ 	} flag;
+ 	short gm_lv_trade_override;	//GM-level to override trade_restriction
+ };
+Index: src/map/pc.c
+===================================================================
+--- src/map/pc.c	(revision 14955)
++++ src/map/pc.c	(working copy)
+@@ -3808,12 +3808,17 @@
+ 	{
+ 		if( sd->status.inventory[n].expire_time == 0 )
+ 		{
+-			clif_useitemack(sd,n,amount-1,1);
++			if(sd->inventory_data[n]->flag.infusable) {
++			clif_useitemack(sd,n,amount,1); //Бесконечный расход
++			} else {
++			clif_useitemack(sd,n,amount-1,1); //Обычный расход
++			}
+ 
+ 			//Logs (C)onsumable items [Lupus]
+ 			if( log_config.enable_logs&0x100 )
+ 				log_pick_pc(sd, "C", sd->status.inventory[n].nameid, -1, &sd->status.inventory[n]);
+ 
++			if(!sd->inventory_data[n]->flag.infusable)
+ 			pc_delitem(sd,n,1,1,0); // Rental Usable Items are not deleted until expiration
+ 		}
+ 		else
