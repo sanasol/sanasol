@@ -19,7 +19,7 @@ if (isset($_POST["c0unt"])) {
 
 $count = trim($_POST["c0unt"]);
 
-if($count == "" or $count <= 0) { echo "Вы должны купить хотя бы 1 поинт"; } else {
+if($count == "" or $count <= 0) { echo "Вы должны купить хотя бы 1 TCG"; } else {
 
 $item_id = "7227";
 $cost = 15; // Цена в рублях за 1 ТЦГ
