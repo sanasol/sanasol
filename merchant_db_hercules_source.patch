@@ -1,0 +1,69 @@
+diff --git a/src/map/unit.c b/src/map/unit.c
+index 22c7165..9b0aa6a 100644
+--- a/src/map/unit.c
++++ b/src/map/unit.c
+@@ -2135,6 +2135,9 @@ int unit_remove_map_(struct block_list *bl, clr_type clrtype, const char* file,
+ 				chat->leavechat(sd,0);
+ 			if(sd->trade_partner)
+ 				trade->cancel(sd);
++			//vending to db [Sanasol]
++            vending->close(sd);
++            //vending to db [Sanasol]
+ 			buyingstore->close(sd);
+ 			searchstore->close(sd);
+ 			if(sd->state.storage_flag == 1)
+diff --git a/src/map/vending.c b/src/map/vending.c
+index 2784d46..0f213a2 100644
+--- a/src/map/vending.c
++++ b/src/map/vending.c
+@@ -37,6 +37,10 @@ void vending_closevending(struct map_session_data* sd) {
+ 	if( sd->state.vending ) {
+ 		sd->state.vending = false;
+ 		clif->closevendingboard(&sd->bl, 0);
++		//vending to db [Sanasol]
++		if( SQL_ERROR == SQL->Query(mmysql_handle,"delete from `vending` where `char_id`='%d'", sd->status.char_id) )
++		Sql_ShowDebug(mmysql_handle);
++		//vending to db [Sanasol]
+ 		idb_remove(vending->db, sd->status.char_id);
+ 	}
+ }
+@@ -174,7 +178,18 @@ void vending_purchasereq(struct map_session_data* sd, int aid, unsigned int uid,
+ 		vsd->vending[vend_list[i]].amount -= amount;
+ 		pc->cart_delitem(vsd, idx, amount, 0, LOG_TYPE_VENDING);
+ 		clif->vendingreport(vsd, idx, amount);
+-
++		//vending to db [Sanasol]
++		if(vsd->vending[vend_list[i]].amount >= 1)
++		{
++			if( SQL_ERROR == SQL->Query(mmysql_handle,"update `vending` set `amount`='%d' where `char_id`='%d' and `index`='%d'", vsd->vending[vend_list[i]].amount, vsd->status.char_id, vend_list[i]) )
++				Sql_ShowDebug(mmysql_handle);
++		}
++		else
++		{
++			if( SQL_ERROR == SQL->Query(mmysql_handle,"delete from `vending` where `char_id`='%d' and `index`='%d'", vsd->status.char_id, vend_list[i]) )
++				Sql_ShowDebug(mmysql_handle);
++		}
++		//vending to db [Sanasol]
+ 		//print buyer's name
+ 		if( battle_config.buyer_name ) {
+ 			char temp[256];
+@@ -281,6 +296,19 @@ void vending_openvending(struct map_session_data* sd, const char* message, const
+ 	safestrncpy(sd->message, message, MESSAGE_SIZE);
+ 
+ 	clif->openvending(sd,sd->bl.id,sd->vending);
++	 //vending to db [Sanasol]
++    for( j = 0; j < count; j++ )
++    {
++        int index = sd->vending[j].index;
++        struct item_data* data = itemdb->search(sd->status.cart[index].nameid);
++        int nameid = ( data->view_id > 0 ) ? data->view_id : sd->status.cart[index].nameid;
++        int amount = sd->vending[j].amount;
++        int price = cap_value(sd->vending[j].value, 0, (unsigned int)battle_config.vending_max_value);
++        
++        if( SQL_ERROR == SQL->Query(mmysql_handle,"INSERT INTO `vending` (`char_id`,`name`,`index`,`nameid`,`amount`,`price`,`refine`,`card0`,`card1`,`card2`,`card3`) VALUES (%d, '%s', '%d', '%d', '%d', '%d', '%d', '%d', '%d', '%d', '%d')", sd->status.char_id, message, j, nameid, amount, price, sd->status.cart[index].refine, sd->status.cart[index].card[0], sd->status.cart[index].card[1], sd->status.cart[index].card[2], sd->status.cart[index].card[3]) )
++        Sql_ShowDebug(mmysql_handle);
++    }
++    //vending to db [Sanasol]
+ 	clif->showvendingboard(&sd->bl,message,0);
+ 	
+ 	idb_put(vending->db, sd->vender_id, sd);
