@@ -18,6 +18,32 @@ Sql_ShowDebug(mmysql_handle);
 //vending to db [Sanasol]
 ```
 
+Function: vending_purchasereq
+
+After
+```C
+// vending item
+pc_additem(sd, &vsd->status.cart[idx], amount, LOG_TYPE_VENDING);
+vsd->vending[vend_list[i]].amount -= amount;
+pc_cart_delitem(vsd, idx, amount, 0, LOG_TYPE_VENDING);
+clif_vendingreport(vsd, idx, amount);
+```
+Add
+```C
+//vending to db [Sanasol]
+		if(vsd->vending[vend_list[i]].amount >= 1)
+		{
+			if( SQL_ERROR == Sql_Query(mmysql_handle,"update `vending` set `amount`='%d' where `char_id`='%d' and `index`='%d'", vsd->vending[vend_list[i]].amount, vsd->status.char_id, vend_list[i]) )
+				Sql_ShowDebug(mmysql_handle);
+		}
+		else
+		{
+			if( SQL_ERROR == Sql_Query(mmysql_handle,"delete from `vending` where `char_id`='%d' and `index`='%d'", vsd->status.char_id, vend_list[i]) )
+				Sql_ShowDebug(mmysql_handle);
+		}
+//vending to db [Sanasol]
+```
+
 Function: vending_openvending
 
 After
