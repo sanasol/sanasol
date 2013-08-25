@@ -67,6 +67,32 @@ Add
     //vending to db [Sanasol]
 ```
 
+
+/src/map/unit.c
+
+After
+```C
+		case BL_PC: {
+			struct map_session_data *sd = (struct map_session_data*)bl;
+
+			if(sd->shadowform_id){ //if shadow target has leave the map
+			    struct block_list *d_bl = map_id2bl(sd->shadowform_id);
+			    if( d_bl )
+				    status_change_end(d_bl,SC__SHADOWFORM,INVALID_TIMER);
+			}
+			//Leave/reject all invitations.
+			if(sd->chatID)
+				chat_leavechat(sd,0);
+			if(sd->trade_partner)
+				trade_tradecancel(sd);
+Add
+```C
+            //vending to db [Sanasol]
+            vending_closevending(sd);
+            //vending to db [Sanasol]
+```
+
+
 To database import table
 ```SQL
 CREATE TABLE IF NOT EXISTS `vending` (
