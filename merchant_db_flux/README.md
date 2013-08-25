@@ -85,6 +85,7 @@ After
 				chat_leavechat(sd,0);
 			if(sd->trade_partner)
 				trade_tradecancel(sd);
+```
 Add
 ```C
             //vending to db [Sanasol]
