@@ -1,4 +1,47 @@
 <?php if (!defined('FLUX_ROOT')) exit; ?>
+
+<link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css" />
+	<script src="http://code.jquery.com/jquery-1.9.1.js"></script>
+	<script src="http://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
+	<style>
+		.map {
+		width: 250px;
+		}
+		.ui-tooltip {
+		max-height: 350px;
+		}
+		.mapinfo
+		{
+		text-align: center;
+		border-bottom: 1px dashed gray;
+		color: gray;
+		}
+		.mapinfo:hover
+		{
+		cursor: pointer;
+		color: white;
+		background: gray;
+		border-bottom: 1px dashed white;
+		}
+		.head,.main
+		{
+		text-align: center;
+		}
+	</style>
+	<script>
+		$(function() {
+			$( document ).tooltip({
+				position: { my: "left+5 top-50", at: "right center", collision: "flipfit" },
+				items: "[data-map]",
+				content: function() {
+					if ( $( this ).is( "[data-map]" ) ) {
+						return "<img class='map' src='addons/vending/modules/map/map.php?map="+$(this).data('map')+"&x="+$(this).data('x')+"&y="+$(this).data('y')+"'>";
+					}
+				}
+			});
+		});
+	</script>
+	
 <h2>Vending Database</h2>
 <p class="toggler"><a href="javascript:toggleSearchForm()">Search...</a></p>
 <form action="<?php echo $this->url ?>" method="get" class="search-form">
@@ -42,7 +85,7 @@
 			<?php echo htmlspecialchars($char->name) ?>
 		</td>
 		<td>
-			<?php echo htmlspecialchars($char->last_map)." ".htmlspecialchars($char->last_x).",".htmlspecialchars($char->last_y) ?>
+			<span class='mapinfo' data-map='<?=$char->last_map?>' data-x='<?=$char->last_x?>' data-y='<?=$char->last_y?>'><?php echo htmlspecialchars($char->last_map)." ".htmlspecialchars($char->last_x).",".htmlspecialchars($char->last_y) ?></span>
 		</td>
 		<?php if ($icon=$this->iconImage($char->nameid)) ?>
 		<td width="24"><img src="<?php echo htmlspecialchars($icon); ?>?nocache=<?php echo rand(); ?>" /></td>
