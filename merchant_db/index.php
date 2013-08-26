@@ -192,19 +192,22 @@
 					{
 						foreach($results as $row)
 						{
+							$nick = "";
+							if($row->card0 == 254) {  $char_sign = $db->select("`char`","char_id='{$row->card2}'", "", "name"); $nick_just = $char_sign[0]->name; $nick = "<span style='color: blue;'>{$nick_just}'s</span> "; }
+							
 							$item = get_item_name($row->nameid);
 							echo "<tr>
 							<td>{$row->name}</td>
 							<td>{$row->merchant_name}</td>
 							<td><p class='mapinfo' data-map='{$row->last_map}' data-x='{$row->last_x}' data-y='{$row->last_y}'>{$row->last_map} {$row->last_x},{$row->last_y}</p></td>
 							<td><img height='20' src='items_small/{$row->nameid}.png' title='{$item}' /></td>
-							<td>{$item}</td>
+							<td>{$nick}{$item}</td>
 							<td>{$row->amount}</td>
 							<td>{$row->price}z</td>
 							<td>{$refine[$row->refine]}</td>
 							<td>".get_item_name($row->card0)."</td>
 							<td>".get_item_name($row->card1)."</td>
-							<td>".get_item_name($row->card2)."</td>
+							<td>".get_item_name(($row->card2 > 255 && $row->card0 != 254) ? $row->card2:0)."</td>
 							<td>".get_item_name($row->card3)."</td>
 							</tr>";
 						}
