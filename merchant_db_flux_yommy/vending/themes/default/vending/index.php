@@ -60,8 +60,8 @@
 
 <table class="horizontal-table">
 	<tr>
-		<th><?php echo $paginator->sortableColumn('v.name', 'Shop') ?></th>
-		<th><?php echo $paginator->sortableColumn('merchant_name', 'Merchant') ?></th>
+		<th><?php echo $paginator->sortableColumn('shop', 'Shop') ?></th>
+		<th><?php echo $paginator->sortableColumn('owner', 'Merchant') ?></th>
 		<th>Position</th>
 		<th colspan="2"><?php echo $paginator->sortableColumn('nameid', 'Item') ?></th>
 		<th><?php echo $paginator->sortableColumn('amount', 'Amount') ?></th>
@@ -75,22 +75,18 @@
 	<?php foreach ($chars as $char): ?>
 	<tr>
 		<td>
-			<?php if ($auth->actionAllowed('character', 'view') && $auth->allowedToViewCharacter): ?>
-			<?php echo $this->linkToCharacter($char->char_id, $char->merchant_name) ?>
-			<?php else: ?>
-			<?php echo htmlspecialchars($char->merchant_name) ?>
-			<?php endif ?>
+			<?php echo htmlspecialchars($char->shop) ?>
 		</td>
 		<td>
-			<?php echo htmlspecialchars($char->name) ?>
+			<?php echo htmlspecialchars($char->owner) ?>
 		</td>
 		<td>
-			<span class='mapinfo' data-map='<?=$char->last_map?>' data-x='<?=$char->last_x?>' data-y='<?=$char->last_y?>'><?php echo htmlspecialchars($char->last_map)." ".htmlspecialchars($char->last_x).",".htmlspecialchars($char->last_y) ?></span>
+			<span class='mapinfo' data-map='<?=$char->map?>' data-x='<?=$char->x?>' data-y='<?=$char->y?>'><?php echo htmlspecialchars($char->map)." ".htmlspecialchars($char->x).",".htmlspecialchars($char->y) ?></span>
 		</td>
 		<?php if ($icon=$this->iconImage($char->nameid)) ?>
 		<td width="24"><img src="<?php echo htmlspecialchars($icon); ?>?nocache=<?php echo rand(); ?>" /></td>
 		<td>
-			<?php
+			<?php 
 				$nick = "";
 				if($char->card0 == 254) {  $nick_just = get_char_name($char->card2,$server); $nick = "<span style='color: blue;'>{$nick_just}'s</span> "; }
 				echo $nick;

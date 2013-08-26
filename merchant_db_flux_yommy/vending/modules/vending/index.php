@@ -1,7 +1,7 @@
 <?php
 	if (!defined('FLUX_ROOT')) exit;
 	
-	$refine = array(0=>"-", "+1", "+2", "+3", "+4", "+5", "+5", "+6", "+7","+8","+9","+10");
+	$refine = array(0=>"-", "+1", "+2", "+3", "+4", "+5", "+6", "+7", "+8", "+9", "+10");
 	
 	function get_item_name($id, $server)
 	{
@@ -16,7 +16,7 @@
 		}
 		else
 		{
-			return;
+			return "";
 		}
 	}
 	
@@ -70,20 +70,20 @@
 	
 	
 	
-	$sql  = "SELECT count(*) AS total FROM {$server->charMapDatabase}.`vending` AS v $sqlpartial";
+	$sql  = "SELECT count(*) AS total FROM {$server->charMapDatabase}.`vending_stat` AS v $sqlpartial";
 	$sth  = $server->connection->getStatement($sql);
 	
 	$sth->execute($bind);
 	
-	$sortable = array('merchant_name', 'v.name', 'nameid', 'amount', 'price', 'refine', 'card0', 'card1', 'card2', 'card3');
+	$sortable = array('shop', 'owner', 'nameid', 'amount', 'price', 'refine', 'card0', 'card1', 'card2', 'card3');
 	
 	$paginator = $this->getPaginator($sth->fetch()->total);
 	$paginator->setSortableColumns($sortable);
 	
 	
-	$col  = "v.*,char.name as merchant_name, char.last_map, char.last_x, char.last_y";
+	$col  = "v.*";
 	
-	$sql  = $paginator->getSQL("SELECT $col FROM {$server->charMapDatabase}.`vending` AS v left join {$server->charMapDatabase}.`char` on `char`.char_id=`v`.char_id $sqlpartial");
+	$sql  = $paginator->getSQL("SELECT $col FROM {$server->charMapDatabase}.`vending_stat` AS v $sqlpartial");
 	$sth  = $server->connection->getStatement($sql);
 	
 	$sth->execute($bind);
