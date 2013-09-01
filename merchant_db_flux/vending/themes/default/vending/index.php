@@ -1,47 +1,47 @@
 <?php if (!defined('FLUX_ROOT')) exit; ?>
 
 <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css" />
-	<script src="http://code.jquery.com/jquery-1.9.1.js"></script>
-	<script src="http://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
-	<style>
-		.map {
-		width: 250px;
-		}
-		.ui-tooltip {
-		max-height: 350px;
-		}
-		.mapinfo
-		{
-		text-align: center;
-		border-bottom: 1px dashed gray;
-		color: gray;
-		}
-		.mapinfo:hover
-		{
-		cursor: pointer;
-		color: white;
-		background: gray;
-		border-bottom: 1px dashed white;
-		}
-		.head,.main
-		{
-		text-align: center;
-		}
-	</style>
-	<script>
-		$(function() {
-			$( document ).tooltip({
-				position: { my: "left+5 top-50", at: "right center", collision: "flipfit" },
-				items: "[data-map]",
-				content: function() {
-					if ( $( this ).is( "[data-map]" ) ) {
-						return "<img class='map' src='addons/vending/modules/map/map.php?map="+$(this).data('map')+"&x="+$(this).data('x')+"&y="+$(this).data('y')+"'>";
-					}
+<script src="http://code.jquery.com/jquery-1.9.1.js"></script>
+<script src="http://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
+<style>
+	.map {
+	width: 250px;
+	}
+	.ui-tooltip {
+	max-height: 350px;
+	}
+	.mapinfo
+	{
+	text-align: center;
+	border-bottom: 1px dashed gray;
+	color: gray;
+	}
+	.mapinfo:hover
+	{
+	cursor: pointer;
+	color: white;
+	background: gray;
+	border-bottom: 1px dashed white;
+	}
+	.head,.main
+	{
+	text-align: center;
+	}
+</style>
+<script>
+	$(function() {
+		$( document ).tooltip({
+			position: { my: "left+5 top-50", at: "right center", collision: "flipfit" },
+			items: "[data-map]",
+			content: function() {
+				if ( $( this ).is( "[data-map]" ) ) {
+					return "<img class='map' src='addons/vending/modules/map/map.php?map="+$(this).data('map')+"&x="+$(this).data('x')+"&y="+$(this).data('y')+"'>";
 				}
-			});
+			}
 		});
-	</script>
-	
+	});
+</script>
+
 <h2>Vending Database</h2>
 <p class="toggler"><a href="javascript:toggleSearchForm()">Search...</a></p>
 <form action="<?php echo $this->url ?>" method="get" class="search-form">
@@ -73,6 +73,21 @@
 		<th><?php echo $paginator->sortableColumn('card3', 'Card(4)') ?></th>
 	</tr>
 	<?php foreach ($chars as $char): ?>
+	<?php
+		$char->name2 = $char->name;
+		$char->name = mb_substr($char->name,0, 10, "UTF-8")."...";
+		
+		$vvs = "";
+		if ($char->card0 == 255 && intval($char->card1/1280) > 0)
+		{
+			for ($i = 0; $i < intval($char->card1/1280); $i++)
+			{
+				$vvs .= "Very ";
+			}
+			$vvs .= "Strong ";
+			$vvs = "<span style='color: blue;'>{$vvs}</span> ";
+		}	
+	?>
 	<tr>
 		<td>
 			<?php if ($auth->actionAllowed('character', 'view') && $auth->allowedToViewCharacter): ?>
@@ -81,8 +96,8 @@
 			<?php echo htmlspecialchars($char->merchant_name) ?>
 			<?php endif ?>
 		</td>
-		<td>
-			<?php echo htmlspecialchars($char->name) ?>
+		<td title="<?php echo htmlspecialchars($char->shop2) ?>">
+			<?php echo htmlspecialchars($char->shop) ?>
 		</td>
 		<td>
 			<span class='mapinfo' data-map='<?=$char->last_map?>' data-x='<?=$char->last_x?>' data-y='<?=$char->last_y?>'><?php echo htmlspecialchars($char->last_map)." ".htmlspecialchars($char->last_x).",".htmlspecialchars($char->last_y) ?></span>
@@ -93,7 +108,7 @@
 			<?php
 				$nick = "";
 				if($char->card0 == 254) {  $nick_just = get_char_name($char->card2,$server); $nick = "<span style='color: blue;'>{$nick_just}'s</span> "; }
-				echo $nick;
+				echo $nick.$vvs;
 				echo $this->linkToItem($char->nameid,get_item_name($char->nameid,$server));
 			?>
 		</td>
