@@ -5,11 +5,11 @@
 	
 	if(empty($_POST['order']))
 	{
-		$order = 'price';
+		$order = 'nameid';
 	}
 	else
 	{
-		$order_cols = array("amount"=>"amount", "price"=>"price");
+		$order_cols = array("amount"=>"amount", "price"=>"price", "name"=>"shop");
 		$order = $order_cols[$_POST['order']];
 	}
 	if(empty($_POST['order2']))
@@ -146,7 +146,7 @@
 					</td>
 				</tr>
 				<tr>
-					<td>Shop</td>
+					<td style="width: 200px !important;">Shop</td>
 					<td>Merchant</td>
 					<td>Position</td>
 					<td></td>
@@ -161,14 +161,20 @@
 				</tr>
 			</thead>
 			<tfoot>
-				<tr><td colspan="12">Items found: <?php echo $totalrows; ?></td></tr>
+				<td colspan="12">
+					<?php
+						echo $pages->display_pages();  	
+					?>
+				</td>
+				<tr><td colspan="12">Items shown: <?php echo $totalrows; ?> of <?=$count[0]->cnt?></td></tr>
 				<tr><td colspan="12">
 					<form action="" method="post" class="form-inline">
 						<div class="form-group">
 							<label class="sr-only" for="sort">Sorting:</label>
 							<select name="order" class="form-control" >
-								<option value="price" selected="selected">By price</option>
+								<option value="price">By price</option>
 								<option value="amount">By amount</option>
+								<option value="name" selected="selected">By shop</option>
 							</select>
 						</div>
 						<div class="form-group">
@@ -195,15 +201,31 @@
 							$nick = "";
 							if($row->card0 == 254) {  $char_sign = $db->select("`char`","char_id='{$row->card2}'", "", "name"); $nick_just = $char_sign[0]->name; $nick = "<span style='color: blue;'>{$nick_just}'s</span> "; }
 							
+							$row->price = number_format($row->price);
+							$row->amount = number_format($row->amount);
+							
+							$row->shop2 = $row->shop;
+							$row->shop = mb_substr($row->shop,0, 10, "UTF-8")."...";
+							
+							$vvs = "";
+							if ($row->card0 == 255 && intval($row->card1/1280) > 0)
+							{
+								for ($i = 0; $i < intval($row->card1/1280); $i++)
+								{
+									$vvs .= "Very ";
+								}
+								$vvs .= "Strong ";
+								$vvs = "<span style='color: blue;'>{$vvs}</span> ";
+							}
 							
 							
 							$item = get_item_name($row->nameid);
 							echo "<tr>
-							<td>{$row->shop}</td>
+							<td title=\"{$row->shop2}\">{$row->shop}</td>
 							<td>{$row->owner}</td>
 							<td><p class='mapinfo' data-map='{$row->map}' data-x='{$row->x}' data-y='{$row->y}'>{$row->map} {$row->x},{$row->y}</p></td>
 							<td><img height='20' src='items_small/{$row->nameid}.png' title='{$item}' /></td>
-							<td>{$nick}{$item}</td>
+							<td>{$nick}{$vvs}{$item}</td>
 							<td>{$row->amount}</td>
 							<td>{$row->price}z</td>
 							<td>{$refine[$row->refine]}</td>
