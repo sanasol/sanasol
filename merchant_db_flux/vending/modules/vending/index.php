@@ -11,8 +11,8 @@
 			$sth  = $server->connection->getStatement($sql);
 			$sth->execute();
 			$r = $sth->fetch();
-			$slots = ($r->slots > 0) ? "[{$r->slots}]":""; 
-			if(strlen($r->name_japanese) > 1)
+			$slots = (@$r->slots > 0) ? "[{$r->slots}]":""; 
+			if(strlen(@$r->name_japanese) > 1)
 				return $r->name_japanese.$slots;
 			else
 				return "Unknown Item";
