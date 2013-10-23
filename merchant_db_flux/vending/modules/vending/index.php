@@ -12,7 +12,10 @@
 			$sth->execute();
 			$r = $sth->fetch();
 			$slots = ($r->slots > 0) ? "[{$r->slots}]":""; 
-			return $r->name_japanese.$slots;
+			if(!empty($r->name_japanese))
+				return $r->name_japanese.$slots;
+			else
+				return "Unknown Item";
 		}
 		else
 		{

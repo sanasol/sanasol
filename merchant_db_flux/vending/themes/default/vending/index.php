@@ -96,8 +96,8 @@
 			<?php echo htmlspecialchars($char->merchant_name) ?>
 			<?php endif ?>
 		</td>
-		<td title="<?php echo htmlspecialchars($char->shop2) ?>">
-			<?php echo htmlspecialchars($char->shop) ?>
+		<td title="<?php echo htmlspecialchars($char->name2) ?>">
+			<?php echo htmlspecialchars($char->name) ?>
 		</td>
 		<td>
 			<span class='mapinfo' data-map='<?=$char->last_map?>' data-x='<?=$char->last_x?>' data-y='<?=$char->last_y?>'><?php echo htmlspecialchars($char->last_map)." ".htmlspecialchars($char->last_x).",".htmlspecialchars($char->last_y) ?></span>
