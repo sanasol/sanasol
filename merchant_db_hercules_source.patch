@@ -21,8 +21,8 @@ index 2784d46..0f213a2 100644
  		sd->state.vending = false;
  		clif->closevendingboard(&sd->bl, 0);
 +		//vending to db [Sanasol]
-+		if( SQL_ERROR == SQL->Query(mmysql_handle,"delete from `vending` where `char_id`='%d'", sd->status.char_id) )
-+		Sql_ShowDebug(mmysql_handle);
++		if( SQL_ERROR == SQL->Query(map->mysql_handle,"delete from `vending` where `char_id`='%d'", sd->status.char_id) )
++		Sql_ShowDebug(map->mysql_handle);
 +		//vending to db [Sanasol]
  		idb_remove(vending->db, sd->status.char_id);
  	}
@@ -35,13 +35,13 @@ index 2784d46..0f213a2 100644
 +		//vending to db [Sanasol]
 +		if(vsd->vending[vend_list[i]].amount >= 1)
 +		{
-+			if( SQL_ERROR == SQL->Query(mmysql_handle,"update `vending` set `amount`='%d' where `char_id`='%d' and `index`='%d'", vsd->vending[vend_list[i]].amount, vsd->status.char_id, vend_list[i]) )
-+				Sql_ShowDebug(mmysql_handle);
++			if( SQL_ERROR == SQL->Query(map->mysql_handle,"update `vending` set `amount`='%d' where `char_id`='%d' and `index`='%d'", vsd->vending[vend_list[i]].amount, vsd->status.char_id, vend_list[i]) )
++				Sql_ShowDebug(map->mysql_handle);
 +		}
 +		else
 +		{
-+			if( SQL_ERROR == SQL->Query(mmysql_handle,"delete from `vending` where `char_id`='%d' and `index`='%d'", vsd->status.char_id, vend_list[i]) )
-+				Sql_ShowDebug(mmysql_handle);
++			if( SQL_ERROR == SQL->Query(map->mysql_handle,"delete from `vending` where `char_id`='%d' and `index`='%d'", vsd->status.char_id, vend_list[i]) )
++				Sql_ShowDebug(map->mysql_handle);
 +		}
 +		//vending to db [Sanasol]
  		//print buyer's name
@@ -60,8 +60,8 @@ index 2784d46..0f213a2 100644
 +        int amount = sd->vending[j].amount;
 +        int price = cap_value(sd->vending[j].value, 0, (unsigned int)battle_config.vending_max_value);
 +        
-+        if( SQL_ERROR == SQL->Query(mmysql_handle,"INSERT INTO `vending` (`char_id`,`name`,`index`,`nameid`,`amount`,`price`,`refine`,`card0`,`card1`,`card2`,`card3`) VALUES (%d, '%s', '%d', '%d', '%d', '%d', '%d', '%d', '%d', '%d', '%d')", sd->status.char_id, message, j, nameid, amount, price, sd->status.cart[index].refine, sd->status.cart[index].card[0], sd->status.cart[index].card[1], sd->status.cart[index].card[2], sd->status.cart[index].card[3]) )
-+        Sql_ShowDebug(mmysql_handle);
++        if( SQL_ERROR == SQL->Query(map->mysql_handle,"INSERT INTO `vending` (`char_id`,`name`,`index`,`nameid`,`amount`,`price`,`refine`,`card0`,`card1`,`card2`,`card3`) VALUES (%d, '%s', '%d', '%d', '%d', '%d', '%d', '%d', '%d', '%d', '%d')", sd->status.char_id, message, j, nameid, amount, price, sd->status.cart[index].refine, sd->status.cart[index].card[0], sd->status.cart[index].card[1], sd->status.cart[index].card[2], sd->status.cart[index].card[3]) )
++        Sql_ShowDebug(map->mysql_handle);
 +    }
 +    //vending to db [Sanasol]
  	clif->showvendingboard(&sd->bl,message,0);
