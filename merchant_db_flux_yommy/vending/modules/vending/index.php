@@ -36,13 +36,18 @@
 	if ($iname) {
 		if(is_numeric($iname))
 		{
-			$sql  = "SELECT id  FROM {$server->charMapDatabase}.`item_db` where id='{$iname}'";
-			$sth  = $server->connection->getStatement($sql);
-			$sth->execute();
-			$item = $sth->fetchAll();
+			$iname = filter_var($iname,FILTER_SANITIZE_NUMBER_INT);
+			if($iname > 0)
+			{
+				$sql  = "SELECT id  FROM {$server->charMapDatabase}.`item_db` where id='{$iname}'";
+				$sth  = $server->connection->getStatement($sql);
+				$sth->execute();
+				$item = $sth->fetchAll();
+			}
 		}
 		else
 		{
+			$iname = preg_replace("/[^a-zA-Z0-9\s]+/", "", $iname);
 			$sql  = "SELECT id  FROM {$server->charMapDatabase}.`item_db` where UPPER(name_japanese) LIKE '%{$iname}%'";
 			$sth  = $server->connection->getStatement($sql);
 			$sth->execute();

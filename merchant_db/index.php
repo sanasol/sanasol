@@ -33,10 +33,15 @@
 		
 		if(is_numeric($_POST['name']))
 		{
-			$item = $db->select("item_db","id=:itemid", array(":itemid"=> "{$name}"), "id");
+			$name = filter_var($name,FILTER_SANITIZE_NUMBER_INT);
+			if($name > 0)
+			{
+				$item = $db->select("item_db","id=:itemid", array(":itemid"=> "{$name}"), "id");
+			}
 		}
 		else
 		{
+			$name = preg_replace("/[^a-zA-Z0-9\s]+/", "", $name);
 			$item = $db->select("item_db","UPPER(name_japanese) LIKE :search", array(":search"=> "%{$name}%"), "id");
 		}
 		
