@@ -17,8 +17,8 @@
 
 <table class="horizontal-table">
 	<tr>
-		<th><?php echo $paginator->sortableColumn('am.title', 'Shop') ?></th>
 		<th><?php echo $paginator->sortableColumn('merchant_name', 'Merchant') ?></th>
+		<th><?php echo $paginator->sortableColumn('am.title', 'Shop') ?></th>
 		<th>Position</th>
 		<th colspan="2"><?php echo $paginator->sortableColumn('nameid', 'Item') ?></th>
 		<th><?php echo $paginator->sortableColumn('amount', 'Amount') ?></th>
@@ -31,8 +31,8 @@
 	</tr>
 	<?php foreach ($chars as $char): ?>
 	<?php
-		$char->name2 = $char->merchant_name;
-		$char->merchant_name = mb_substr($char->merchant_name,0, 10, "UTF-8")."...";
+		$char->title2 = $char->title;
+		$char->title = mb_substr($char->title,0, 10, "UTF-8")."...";
 		
 		$vvs = "";
 		if ($char->card0 == 255 && intval($char->card1/1280) > 0)
@@ -53,8 +53,8 @@
 			<?php echo htmlspecialchars($char->merchant_name) ?>
 			<?php endif ?>
 		</td>
-		<td title="<?php echo htmlspecialchars($char->name2) ?>">
-			<?php echo htmlspecialchars($char->merchant_name) ?>
+		<td title="<?php echo htmlspecialchars($char->title2) ?>">
+			<?php echo htmlspecialchars($char->title) ?>
 		</td>
 		<td>
 			<?php echo htmlspecialchars($char->last_map)." ".htmlspecialchars($char->last_x).",".htmlspecialchars($char->last_y) ?>
