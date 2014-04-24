@@ -9,7 +9,7 @@
 		}
 		else
 		{
-			refine '-';
+			return '-';
 		}
 	}
 	
