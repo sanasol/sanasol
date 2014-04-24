@@ -10,7 +10,17 @@
 	$db = new db("mysql:host={$host};dbname={$dbname}", $user, $pass);  
 	$db->setErrorCallbackFunction("print_r", "text");
 	
-	$refine = array(0=>"-", "+1", "+2", "+3", "+4", "+5", "+6", "+7","+8","+9","+10");
+	function refine_lvl($refine)
+	{
+		if($refine > 0)
+		{
+			return '+'.$refine;
+		}
+		else
+		{
+			refine '-';
+		}
+	}
 	
 	function get_item_name($id)
 	{

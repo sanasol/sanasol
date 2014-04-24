@@ -256,7 +256,7 @@
 							<td>{$nick}{$vvs}{$item}</td>
 							<td>{$row->amount}</td>
 							<td>{$row->price}z</td>
-							<td>{$refine[$row->refine]}</td>
+							<td>".refine_lvl($row->refine)."</td>
 							<td>".get_item_name($row->card0)."</td>
 							<td>".get_item_name(($row->card1 > 255 && $row->card0 > 255) ? $row->card1:0)."</td>
 							<td>".get_item_name(($row->card2 > 255 && $row->card0 > 255) ? $row->card2:0)."</td>

@@ -2,6 +2,17 @@
 	
 	require("config.php");	
 	
+	function refine_lvl($refine)
+	{
+		if($refine > 0)
+		{
+			return '+'.$refine;
+		}
+		else
+		{
+			refine '-';
+		}
+	}
 	
 	if(empty($_POST['order']))
 	{
@@ -233,7 +244,7 @@
 							<td>{$nick}{$vvs}{$item}</td>
 							<td>{$row->amount}</td>
 							<td>{$row->price}z</td>
-							<td>{$refine[$row->refine]}</td>
+							<td>".refine_lvl($row->refine)."</td>
 							<td>".get_item_name($row->card0)."</td>
 							<td>".get_item_name($row->card1)."</td>
 							<td>".get_item_name(($row->card2 > 255 && $row->card0 != 254) ? $row->card2:0)."</td>

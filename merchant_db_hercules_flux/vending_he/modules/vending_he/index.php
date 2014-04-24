@@ -1,7 +1,17 @@
 <?php
 	if (!defined('FLUX_ROOT')) exit;
 	
-	$refine = array(0=>"-", "+1", "+2", "+3", "+4", "+5", "+6", "+7","+8","+9","+10");
+	function refine_lvl($refine)
+	{
+		if($refine > 0)
+		{
+			return '+'.$refine;
+		}
+		else
+		{
+			refine '-';
+		}
+	}
 	
 	function get_item_name($id, $server)
 	{
@@ -75,7 +85,7 @@
 		}
 	}
 	
-	$sql  = "SELECT count(*) AS total FROM {$server->charMapDatabase}.`autotrade_data` $sqlpartial";
+	$sql  = "SELECT count(*) AS total FROM {$server->charMapDatabase}.`autotrade_data` AS ad left join {$server->charMapDatabase}.`cart_inventory` as ci on ci.id=ad.itemkey  $sqlpartial";
 	$sth  = $server->connection->getStatement($sql);
 	
 	$sth->execute($bind);

@@ -31,6 +31,7 @@
 	</tr>
 	<?php foreach ($chars as $char): ?>
 	<?php
+		if(is_null($char->id)) continue;
 		$char->title2 = $char->title;
 		$char->title = mb_substr($char->title,0, 10, "UTF-8")."...";
 		
@@ -76,7 +77,7 @@
 			<?php echo number_format($char->price) ?>
 		</td>
 		<td>
-			<?php echo htmlspecialchars($refine[$char->refine]) ?>
+			<?php echo htmlspecialchars(refine_lvl($char->refine)) ?>
 		</td>
 		<td>
 			<?php echo $this->linkToItem($char->card0, get_item_name($char->card0,$server)) ?>
