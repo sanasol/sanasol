@@ -1,7 +1,7 @@
 root_pass="root"
 ragnarok_db="ragnarok"
-ragnarok_user = "ragnarok"
-ragnarok_pass = "ragnarok"
+ragnarok_user="ragnarok"
+ragnarok_pass="ragnarok"
 echo ""
 echo "[+] Installing depencies..."
 echo ""
@@ -36,24 +36,24 @@ echo ""
 echo "[+] Importing sql schemas: main, logs..."
 echo ""
 $MYSQL -uroot -p$root_pass ragnarok < ~/rAthena/sql-files/main.sql
-$MYSQL -uroot -p"$root_pass" ragnarok < ~/rAthena/sql-files/logs.sql
+$MYSQL -uroot -p$root_pass ragnarok < ~/rAthena/sql-files/logs.sql
 
 
 echo ""
 echo "[+] Importing sql schemas: item dbs..."
 echo ""
-$MYSQL -uroot -p"$root_pass" ragnarok < ~/rAthena/sql-files/item_db.sql
-$MYSQL -uroot -p"$root_pass" ragnarok < ~/rAthena/sql-files/item_db2.sql
-$MYSQL -uroot -p"$root_pass" ragnarok < ~/rAthena/sql-files/item_db_re.sql
-$MYSQL -uroot -p"$root_pass" ragnarok < ~/rAthena/sql-files/item_db2_re.sql
+$MYSQL -uroot -p$root_pass ragnarok < ~/rAthena/sql-files/item_db.sql
+$MYSQL -uroot -p$root_pass ragnarok < ~/rAthena/sql-files/item_db2.sql
+$MYSQL -uroot -p$root_pass ragnarok < ~/rAthena/sql-files/item_db_re.sql
+$MYSQL -uroot -p$root_pass ragnarok < ~/rAthena/sql-files/item_db2_re.sql
 
 echo ""
 echo "[+] Importing sql schemas: mob dbs..."
 echo ""
-$MYSQL -uroot -p"$root_pass" ragnarok < ~/rAthena/sql-files/mob_db.sql
-$MYSQL -uroot -p"$root_pass" ragnarok < ~/rAthena/sql-files/mob_db2.sql
-$MYSQL -uroot -p"$root_pass" ragnarok < ~/rAthena/sql-files/mob_db_re.sql
-$MYSQL -uroot -p"$root_pass" ragnarok < ~/rAthena/sql-files/mob_db2_re.sql
+$MYSQL -uroot -p$root_pass ragnarok < ~/rAthena/sql-files/mob_db.sql
+$MYSQL -uroot -p$root_pass ragnarok < ~/rAthena/sql-files/mob_db2.sql
+$MYSQL -uroot -p$root_pass ragnarok < ~/rAthena/sql-files/mob_db_re.sql
+$MYSQL -uroot -p$root_pass ragnarok < ~/rAthena/sql-files/mob_db2_re.sql
 
 echo ""
 echo "[+] Compiling rAthena..."
