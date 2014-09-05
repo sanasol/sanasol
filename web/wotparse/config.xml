@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<config encoding='UTF-8'>
+	<verbose>1</verbose>
+	
+	<xpath>
+		<domain>//*[@id="wot-popular-table"]/tbody/tr[position()]/td[2]</domain>
+	</xpath>
+</config>
+
+
