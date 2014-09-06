@@ -1,0 +1,208 @@
+diff --git a/src/map/clif.c b/src/map/clif.c
+index 58904a1..066e9a7 100644
+--- a/src/map/clif.c
++++ b/src/map/clif.c
+@@ -8858,6 +8858,152 @@ void clif_charnameack (int fd, struct block_list *bl)
+ 	}
+ }
+ 
++void clif_charnameack2 (int fd, struct block_list *bl, struct map_session_data* sd)
++{
++	unsigned char buf[103];
++	int cmd = 0x95;
++
++	nullpo_retv(bl);
++
++	WBUFW(buf,0) = cmd;
++	WBUFL(buf,2) = bl->id;
++
++	switch( bl->type )
++	{
++	case BL_PC:
++		{
++			struct map_session_data *ssd = (struct map_session_data *)bl;
++			struct party_data *p = NULL;
++			struct guild *g = NULL;
++			int ps = -1;
++
++			//Requesting your own "shadow" name. [Skotlex]
++			if (ssd->fd == fd && ssd->disguise)
++				WBUFL(buf,2) = -bl->id;
++
++			if( ssd->fakename[0] ) {
++				WBUFW(buf, 0) = cmd = 0x195;
++				memcpy(WBUFP(buf,6), ssd->fakename, NAME_LENGTH);
++				WBUFB(buf,30) = WBUFB(buf,54) = WBUFB(buf,78) = 0;
++				break;
++			}
++			memcpy(WBUFP(buf,6), ssd->status.name, NAME_LENGTH);
++
++			if( ssd->status.party_id ) {
++				p = party_search(ssd->status.party_id);
++			}
++			if( ssd->status.guild_id ) {
++				if( ( g = ssd->guild ) != NULL ) {
++					int i;
++
++					ARR_FIND(0, g->max_member, i, g->member[i].account_id == ssd->status.account_id && g->member[i].char_id == ssd->status.char_id);
++					if( i < g->max_member ) ps = g->member[i].position;
++				}
++			}
++
++			if( !battle_config.display_party_name && g == NULL ) {// do not display party unless the player is also in a guild
++				p = NULL;
++			}
++
++			if (p == NULL && g == NULL)
++				break;
++
++			WBUFW(buf, 0) = cmd = 0x195;
++			if (p)
++				memcpy(WBUFP(buf,30), p->party.name, NAME_LENGTH);
++			else
++				WBUFB(buf,30) = 0;
++
++			if (g && ps >= 0 && ps < MAX_GUILDPOSITION)
++			{
++				memcpy(WBUFP(buf,54), g->name,NAME_LENGTH);
++				memcpy(WBUFP(buf,78), g->position[ps].name, NAME_LENGTH);
++			} else { //Assume no guild.
++				WBUFB(buf,54) = 0;
++				WBUFB(buf,78) = 0;
++			}
++		}
++		break;
++	//[blackhole89]
++	case BL_HOM:
++		memcpy(WBUFP(buf,6), ((TBL_HOM*)bl)->homunculus.name, NAME_LENGTH);
++		break;
++	case BL_MER:
++		memcpy(WBUFP(buf,6), ((TBL_MER*)bl)->db->name, NAME_LENGTH);
++		break;
++	case BL_PET:
++		memcpy(WBUFP(buf,6), ((TBL_PET*)bl)->pet.name, NAME_LENGTH);
++		break;
++	case BL_NPC:
++		memcpy(WBUFP(buf,6), ((TBL_NPC*)bl)->name, NAME_LENGTH);
++		break;
++	case BL_MOB:
++		{
++			struct mob_data *md = (struct mob_data *)bl;
++			char loyavar[20];
++			nullpo_retv(md);
++
++			snprintf(loyavar, 20, "loya%d", md->mob_id);
++			memcpy(WBUFP(buf,6), md->name, NAME_LENGTH);
++			if( md->guardian_data && md->guardian_data->guild_id )
++			{
++				WBUFW(buf, 0) = cmd = 0x195;
++				WBUFB(buf,30) = 0;
++				memcpy(WBUFP(buf,54), md->guardian_data->guild_name, NAME_LENGTH);
++				memcpy(WBUFP(buf,78), md->guardian_data->castle->castle_name, NAME_LENGTH);
++			}
++			else if( battle_config.show_mob_info )
++			{
++				char mobhp[50], *str_p = mobhp;
++				WBUFW(buf, 0) = cmd = 0x195;
++				
++				if(sd->status.account_id > 0)
++				{
++					if(pc_readglobalreg(sd, loyavar))
++					{
++						str_p += sprintf(str_p, "[Loyal] | ");
++					}
++				}
++				
++				if( battle_config.show_mob_info&4 )
++					str_p += sprintf(str_p, "Lv. %d | ", md->level);
++				if( battle_config.show_mob_info&1 )
++					str_p += sprintf(str_p, "HP: %u/%u | ", md->status.hp, md->status.max_hp);
++				if( battle_config.show_mob_info&2 )
++					str_p += sprintf(str_p, "HP: %u%% | ", get_percentage(md->status.hp, md->status.max_hp));
++				//Even thought mobhp ain't a name, we send it as one so the client
++				//can parse it. [Skotlex]
++				if( str_p != mobhp )
++				{
++					*(str_p-3) = '\0'; //Remove trailing space + pipe.
++					memcpy(WBUFP(buf,30), mobhp, NAME_LENGTH);
++					WBUFB(buf,54) = 0;
++					WBUFB(buf,78) = 0;
++				}
++			}
++		}
++		break;
++	case BL_CHAT:	//FIXME: Clients DO request this... what should be done about it? The chat's title may not fit... [Skotlex]
++//		memcpy(WBUFP(buf,6), (struct chat*)->title, NAME_LENGTH);
++//		break;
++		return;
++	case BL_ELEM:
++		memcpy(WBUFP(buf,6), ((TBL_ELEM*)bl)->db->name, NAME_LENGTH);
++		break;
++	default:
++		ShowError("clif_charnameack: bad type %d(%d)\n", bl->type, bl->id);
++		return;
++	}
++
++	// if no receipient specified just update nearby clients
++	if (fd == 0)
++		clif_send(buf, packet_len(cmd), bl, AREA);
++	else {
++		WFIFOHEAD(fd, packet_len(cmd));
++		memcpy(WFIFOP(fd, 0), buf, packet_len(cmd));
++		WFIFOSET(fd, packet_len(cmd));
++	}
++}
+ 
+ //Used to update when a char leaves a party/guild. [Skotlex]
+ //Needed because when you send a 0x95 packet, the client will not remove the cached party/guild info that is not sent.
+@@ -10086,7 +10232,7 @@ void clif_parse_GetCharNameRequest(int fd, struct map_session_data *sd)
+ 	}
+ 	*/
+ 
+-	clif_charnameack(fd, bl);
++	clif_charnameack2(fd, bl, sd);
+ }
+ 
+ 
+diff --git a/src/map/clif.h b/src/map/clif.h
+index b4e427a..21d6503 100644
+--- a/src/map/clif.h
++++ b/src/map/clif.h
+@@ -561,6 +561,7 @@ void clif_wis_end(int fd, int result);
+ 
+ void clif_solved_charname(int fd, int charid, const char* name);
+ void clif_charnameack(int fd, struct block_list *bl);
++void clif_charnameack2(int fd, struct block_list *bl, struct map_session_data* sd);
+ void clif_charnameupdate(struct map_session_data *ssd);
+ 
+ void clif_use_card(struct map_session_data *sd,int idx);
+diff --git a/src/map/mob.c b/src/map/mob.c
+index 06eaca6..d24e49e 100644
+--- a/src/map/mob.c
++++ b/src/map/mob.c
+@@ -1056,14 +1056,24 @@ static int mob_ai_sub_hard_activesearch(struct block_list *bl,va_list ap)
+ {
+ 	struct mob_data *md;
+ 	struct block_list **target;
++	struct map_session_data *sd = (struct map_session_data *)bl;
+ 	int mode;
+ 	int dist;
+-
++	char loyavar[20];
+ 	nullpo_ret(bl);
+ 	md=va_arg(ap,struct mob_data *);
+ 	target= va_arg(ap,struct block_list**);
+ 	mode= va_arg(ap,int);
+ 
++	snprintf(loyavar, 20, "loya%d", md->mob_id);
++	if(sd->status.account_id > 0)
++	{
++		if(pc_readglobalreg(sd, loyavar))
++		{
++			return 0;
++		}
++	}
++
+ 	//If can't seek yet, not an enemy, or you can't attack it, skip.
+ 	if ((*target) == bl || !status_check_skilluse(&md->bl, bl, 0, 0))
+ 		return 0;
