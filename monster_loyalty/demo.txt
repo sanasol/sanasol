@@ -1,0 +1,124 @@
+moc_pryd06,94,87,5	script	Loyalty	1002,{
+	setarray .@monsters,
+	1474, // Amon Ra summon Mimic
+	1477, // Amon Ra summon Arclouze
+	1438, // Amon Ra summon Khalitzburg
+	1191, // Mimic
+	1194, // Arclouze
+	1297, // Ancient Mummy
+	1785; // Atroce
+	set .@len, getarraysize(.@monsters); //Array size.
+	set .@menu$, ""; //Menu
+	for (.@i = 0; .@i < .@len; ++.@i)
+	{
+		set .@loyalty$,(getd("loya"+.@monsters[.@i])) ? "^0000FFFriend^000000":"^FF0000Enemy^000000";
+		set .@menu$,.@menu$+":"+getmonsterinfo(.@monsters[.@i],0)+" - "+.@loyalty$; //Menu
+	}
+	set .@sel, select(.@menu$)-1;
+	switch(.@sel) 
+	{
+		case 1:
+			if(loya1474)
+			{
+				set loya1474,0;
+				mes "Now ^00FF00"+getmonsterinfo(1474,0)+"^000000 is your ^FF0000enemy^000000";
+			}
+			else
+			{
+				set loya1474,1;
+				mes "Now ^00FF00"+getmonsterinfo(1474,0)+"^000000 is your ^0000FFfriend^000000";
+			}
+			close;
+		break;
+		
+		case 2:
+			if(loya1477)
+			{
+				set loya1477,0;
+				mes "Now ^00FF00"+getmonsterinfo(1477,0)+"^000000 is your ^FF0000enemy^000000";
+			}
+			else
+			{
+				set loya1477,1;
+				mes "Now ^00FF00"+getmonsterinfo(1477,0)+"^000000 is your ^0000FFfriend^000000";
+			}
+			close;
+		break;
+		
+		case 3:
+			if(loya1438)
+			{
+				set loya1438,0;
+				mes "Now ^00FF00"+getmonsterinfo(1438,0)+"^000000 is your ^FF0000enemy^000000";
+			}
+			else
+			{
+				set loya1438,1;
+				mes "Now ^00FF00"+getmonsterinfo(1438,0)+"^000000 is your ^0000FFfriend^000000";
+			}
+			close;
+		break;
+		
+		case 4:
+			if(loya1191)
+			{
+				set loya1191,0;
+				mes "Now ^00FF00"+getmonsterinfo(1191,0)+"^000000 is your ^FF0000enemy^000000";
+			}
+			else
+			{
+				set loya1191,1;
+				mes "Now ^00FF00"+getmonsterinfo(1191,0)+"^000000 is your ^0000FFfriend^000000";
+			}
+			close;
+		break;
+		
+		
+		
+		case 5:
+			if(loya1194)
+			{
+				set loya1194,0;
+				mes "Now ^00FF00"+getmonsterinfo(1194,0)+"^000000 is your ^FF0000enemy^000000";
+			}
+			else
+			{
+				set loya1194,1;
+				mes "Now ^00FF00"+getmonsterinfo(1194,0)+"^000000 is your ^0000FFfriend^000000";
+			}
+			close;
+		break;
+		
+		case 6:
+			if(loya1297)
+			{
+				set loya1297,0;
+				mes "Now ^00FF00"+getmonsterinfo(1297,0)+"^000000 is your ^FF0000enemy^000000";
+			}
+			else
+			{
+				set loya1297,1;
+				mes "Now ^00FF00"+getmonsterinfo(1297,0)+"^000000 is your ^0000FFfriend^000000";
+			}
+			close;
+		break;
+		
+		case 7:
+			if(loya1785)
+			{
+				set loya1785,0;
+				mes "Now ^00FF00"+getmonsterinfo(1785,0)+"^000000 is your ^FF0000enemy^000000";
+			}
+			else
+			{
+				set loya1785,1;
+				mes "Now ^00FF00"+getmonsterinfo(1785,0)+"^000000 is your ^0000FFfriend^000000";
+			}
+			close;
+		break;
+		
+		default:
+			close;
+		break;
+	}
+}
