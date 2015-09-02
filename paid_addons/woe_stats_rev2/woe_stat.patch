@@ -1,0 +1,1274 @@
+diff --git a/src/char/char.c b/src/char/char.c
+index 54c7fb7..1cbef61 100644
+--- a/src/char/char.c
++++ b/src/char/char.c
+@@ -593,14 +593,36 @@ int mmo_char_tosql(int char_id, struct mmo_charstatus* p)
+ 			p->account_id, p->char_id) )
+ 		{
+ 			Sql_ShowDebug(sql_handle);
+ 			errors++;
+ 		} else
+ 			strcat(save_status, " status2");
+ 	}
++	
++	/* [Sanasol] WoE Statistics */
++	if( memcmp(&p->woe_statistics, &cp->woe_statistics, sizeof(struct s_woestats)) )
++	{
++		if( SQL_ERROR == Sql_Query(sql_handle, "REPLACE INTO `char_woe_statistics` (`char_id`, `kill_count`, `death_count`, `score`, `top_damage`, `damage_done`, `damage_received`, `emperium_damage`, `guardian_damage`, `barricade_damage`, `gstone_damage`, "
++			"`emperium_kill`, `guardian_kill`, `barricade_kill`, `gstone_kill`, "
++			"`sp_heal_potions`, `hp_heal_potions`, `yellow_gemstones`, `red_gemstones`, `blue_gemstones`, `poison_bottles`, `acid_demostration`, `acid_demostration_fail`, "
++			"`support_skills_used`, `healing_done`, `wrong_support_skills_used`, `wrong_healing_done`, "
++			"`sp_used`, `zeny_used`, `spiritb_used`, `ammo_used`, `date`) "
++			"VALUES ('%d', '%d', '%d', '%d', '%u', '%u', '%u', '%u', '%u', '%u', '%u', '%d', '%d', '%d', '%d', '%u', '%u', '%u', '%u', '%u', '%u', '%u', '%u', '%u', '%u', '%u', '%u', '%u', '%u', '%u', '%u', CURRENT_DATE())",
++			p->char_id, p->woe_statistics.kill_count, p->woe_statistics.death_count, p->woe_statistics.score, p->woe_statistics.top_damage, p->woe_statistics.damage_done, p->woe_statistics.damage_received, p->woe_statistics.emperium_damage, p->woe_statistics.guardian_damage, p->woe_statistics.barricade_damage, p->woe_statistics.gstone_damage,
++			p->woe_statistics.emperium_kill, p->woe_statistics.guardian_kill, p->woe_statistics.barricade_kill, p->woe_statistics.gstone_kill,
++			p->woe_statistics.sp_heal_potions, p->woe_statistics.hp_heal_potions, p->woe_statistics.yellow_gemstones, p->woe_statistics.red_gemstones, p->woe_statistics.blue_gemstones, p->woe_statistics.poison_bottles, p->woe_statistics.acid_demostration, p->woe_statistics.acid_demostration_fail,
++			p->woe_statistics.support_skills_used, p->woe_statistics.healing_done, p->woe_statistics.wrong_support_skills_used, p->woe_statistics.wrong_healing_done,
++			p->woe_statistics.sp_used, p->woe_statistics.zeny_used, p->woe_statistics.spiritb_used, p->woe_statistics.ammo_used) )
++		{
++			Sql_ShowDebug(sql_handle);
++			errors++;
++		} else
++			strcat(save_status, " woestats");
++	}
++	/* [Sanasol] WoE Statistics */
+ 
+ 	/* Mercenary Owner */
+ 	if( (p->mer_id != cp->mer_id) ||
+ 		(p->arch_calls != cp->arch_calls) || (p->arch_faith != cp->arch_faith) ||
+ 		(p->spear_calls != cp->spear_calls) || (p->spear_faith != cp->spear_faith) ||
+ 		(p->sword_calls != cp->sword_calls) || (p->sword_faith != cp->sword_faith) )
+ 	{
+@@ -1427,14 +1449,55 @@ int mmo_char_fromsql(int char_id, struct mmo_charstatus* p, bool load_everything
+ 			memcpy(&p->hotkeys[hotkey_num], &tmp_hotkey, sizeof(tmp_hotkey));
+ 		else
+ 			ShowWarning("mmo_char_fromsql: ignoring invalid hotkey (hotkey=%d,type=%u,id=%u,lv=%u) of character %s (AID=%d,CID=%d)\n", hotkey_num, tmp_hotkey.type, tmp_hotkey.id, tmp_hotkey.lv, p->name, p->account_id, p->char_id);
+ 	}
+ 	strcat(t_msg, " hotkeys");
+ #endif
+ 
++	/* [Sanasol] Current WoE Statistics */
++	if( SQL_ERROR == SqlStmt_Prepare(stmt, "SELECT `top_damage`, `damage_done`, `damage_received`, `emperium_damage`, `guardian_damage`, `barricade_damage`, `gstone_damage`, `emperium_kill`, `guardian_kill`, `barricade_kill`, `gstone_kill`, `sp_heal_potions`, `hp_heal_potions`, `yellow_gemstones`, `red_gemstones`, `blue_gemstones`, `poison_bottles`, `acid_demostration`, `acid_demostration_fail`, `support_skills_used`, `healing_done`, `wrong_support_skills_used`, `wrong_healing_done`, `sp_used`, `zeny_used`, `spiritb_used`, `ammo_used`, `kill_count`, `death_count`, `score` FROM `char_woe_statistics` WHERE `char_id` = ? and `date`=CURRENT_DATE()")
++		|| SQL_ERROR == SqlStmt_BindParam(stmt, 0, SQLDT_INT, &char_id, 0)
++		|| SQL_ERROR == SqlStmt_Execute(stmt)
++		|| SQL_ERROR == SqlStmt_BindColumn(stmt,  0, SQLDT_UINT, &p->woe_statistics.top_damage, 0, NULL, NULL)
++		|| SQL_ERROR == SqlStmt_BindColumn(stmt,  1, SQLDT_UINT, &p->woe_statistics.damage_done, 0, NULL, NULL)
++		|| SQL_ERROR == SqlStmt_BindColumn(stmt,  2, SQLDT_UINT, &p->woe_statistics.damage_received, 0, NULL, NULL)
++		|| SQL_ERROR == SqlStmt_BindColumn(stmt,  3, SQLDT_UINT, &p->woe_statistics.emperium_damage, 0, NULL, NULL)
++		|| SQL_ERROR == SqlStmt_BindColumn(stmt,  4, SQLDT_UINT, &p->woe_statistics.guardian_damage, 0, NULL, NULL)
++		|| SQL_ERROR == SqlStmt_BindColumn(stmt,  5, SQLDT_UINT, &p->woe_statistics.barricade_damage, 0, NULL, NULL)
++		|| SQL_ERROR == SqlStmt_BindColumn(stmt,  6, SQLDT_UINT, &p->woe_statistics.gstone_damage, 0, NULL, NULL)
++		|| SQL_ERROR == SqlStmt_BindColumn(stmt,  7, SQLDT_USHORT, &p->woe_statistics.emperium_kill, 0, NULL, NULL)
++		|| SQL_ERROR == SqlStmt_BindColumn(stmt,  8, SQLDT_USHORT, &p->woe_statistics.guardian_kill, 0, NULL, NULL)
++		|| SQL_ERROR == SqlStmt_BindColumn(stmt,  9, SQLDT_USHORT, &p->woe_statistics.barricade_kill, 0, NULL, NULL)
++		|| SQL_ERROR == SqlStmt_BindColumn(stmt, 10, SQLDT_USHORT, &p->woe_statistics.gstone_kill, 0, NULL, NULL)
++		|| SQL_ERROR == SqlStmt_BindColumn(stmt, 11, SQLDT_UINT, &p->woe_statistics.sp_heal_potions, 0, NULL, NULL)
++		|| SQL_ERROR == SqlStmt_BindColumn(stmt, 12, SQLDT_UINT, &p->woe_statistics.hp_heal_potions, 0, NULL, NULL)
++		|| SQL_ERROR == SqlStmt_BindColumn(stmt, 13, SQLDT_UINT, &p->woe_statistics.yellow_gemstones, 0, NULL, NULL)
++		|| SQL_ERROR == SqlStmt_BindColumn(stmt, 14, SQLDT_UINT, &p->woe_statistics.red_gemstones, 0, NULL, NULL)
++		|| SQL_ERROR == SqlStmt_BindColumn(stmt, 15, SQLDT_UINT, &p->woe_statistics.blue_gemstones, 0, NULL, NULL)
++		|| SQL_ERROR == SqlStmt_BindColumn(stmt, 16, SQLDT_UINT, &p->woe_statistics.poison_bottles, 0, NULL, NULL)
++		|| SQL_ERROR == SqlStmt_BindColumn(stmt, 17, SQLDT_UINT, &p->woe_statistics.acid_demostration, 0, NULL, NULL)
++		|| SQL_ERROR == SqlStmt_BindColumn(stmt, 18, SQLDT_UINT, &p->woe_statistics.acid_demostration_fail, 0, NULL, NULL)
++		|| SQL_ERROR == SqlStmt_BindColumn(stmt, 19, SQLDT_UINT, &p->woe_statistics.support_skills_used, 0, NULL, NULL)
++		|| SQL_ERROR == SqlStmt_BindColumn(stmt, 20, SQLDT_UINT, &p->woe_statistics.healing_done, 0, NULL, NULL)
++		|| SQL_ERROR == SqlStmt_BindColumn(stmt, 21, SQLDT_UINT, &p->woe_statistics.wrong_support_skills_used, 0, NULL, NULL)
++		|| SQL_ERROR == SqlStmt_BindColumn(stmt, 22, SQLDT_UINT, &p->woe_statistics.wrong_healing_done, 0, NULL, NULL)
++		|| SQL_ERROR == SqlStmt_BindColumn(stmt, 23, SQLDT_UINT, &p->woe_statistics.sp_used, 0, NULL, NULL)
++		|| SQL_ERROR == SqlStmt_BindColumn(stmt, 24, SQLDT_UINT, &p->woe_statistics.zeny_used, 0, NULL, NULL)
++		|| SQL_ERROR == SqlStmt_BindColumn(stmt, 25, SQLDT_UINT, &p->woe_statistics.spiritb_used, 0, NULL, NULL)
++		|| SQL_ERROR == SqlStmt_BindColumn(stmt, 26, SQLDT_UINT, &p->woe_statistics.ammo_used, 0, NULL, NULL)
++		|| SQL_ERROR == SqlStmt_BindColumn(stmt, 27, SQLDT_USHORT, &p->woe_statistics.kill_count, 0, NULL, NULL)
++		|| SQL_ERROR == SqlStmt_BindColumn(stmt, 28, SQLDT_USHORT, &p->woe_statistics.death_count, 0, NULL, NULL)
++		|| SQL_ERROR == SqlStmt_BindColumn(stmt, 29, SQLDT_USHORT, &p->woe_statistics.score, 0, NULL, NULL)
++		|| SQL_SUCCESS != SqlStmt_NextRow(stmt) )
++	{
++		p->woe_statistics.score = 2000;
++	}
++	strcat(t_msg, " woestats");
++	/* [Sanasol] Current WoE Statistics */
++
+ 	/* Mercenary Owner DataBase */
+ 	mercenary_owner_fromsql(char_id, p);
+ 	strcat(t_msg, " mercenary");
+ 
+ 
+ 	if (save_log) ShowInfo("Loaded char (%d - %s): %s\n", char_id, p->name, t_msg);	//ok. all data load successfuly!
+ 	SqlStmt_Free(stmt);
+diff --git a/src/common/mmo.h b/src/common/mmo.h
+index 0882a0a..107843e 100644
+--- a/src/common/mmo.h
++++ b/src/common/mmo.h
+@@ -320,14 +320,52 @@ struct s_friend {
+ struct hotkey {
+ 	unsigned int id;
+ 	unsigned short lv;
+ 	unsigned char type; // 0: item, 1: skill
+ };
+ #endif
+ 
++struct s_woestats {
++	int score;
++	unsigned short
++		kill_count,
++		death_count;
++	unsigned int
++		top_damage,
++		damage_done,
++		damage_received;
++	unsigned int
++		emperium_damage,
++		guardian_damage,
++		barricade_damage,
++		gstone_damage;
++	unsigned short
++		emperium_kill,
++		guardian_kill,
++		barricade_kill,
++		gstone_kill;
++	unsigned int // Ammo
++		sp_heal_potions,
++		hp_heal_potions,
++		yellow_gemstones,
++		red_gemstones,
++		blue_gemstones,
++		poison_bottles,
++		acid_demostration,
++		acid_demostration_fail,
++		support_skills_used,
++		healing_done,
++		wrong_support_skills_used,
++		wrong_healing_done,
++		sp_used,
++		zeny_used,
++		spiritb_used,
++		ammo_used;
++};
++
+ struct mmo_charstatus {
+ 	int char_id;
+ 	int account_id;
+ 	int partner_id;
+ 	int father;
+ 	int mother;
+ 	int child;
+@@ -360,14 +398,16 @@ struct mmo_charstatus {
+ 	unsigned int base_level,job_level;
+ 	short str,agi,vit,int_,dex,luk;
+ 	unsigned char slot,sex;
+ 
+ 	uint32 mapip;
+ 	uint16 mapport;
+ 
++	struct s_woestats woe_statistics;
++
+ 	struct point last_point,save_point,memo_point[MAX_MEMOPOINTS];
+ 	struct item inventory[MAX_INVENTORY],cart[MAX_CART];
+ 	struct storage_data storage;
+ 	struct s_skill skill[MAX_SKILL];
+ 
+ 	struct s_friend friends[MAX_FRIENDS]; //New friend system [Skotlex]
+ #ifdef HOTKEY_SAVING
+diff --git a/src/common/utils.h b/src/common/utils.h
+index 3fc5634..3505e1b 100644
+--- a/src/common/utils.h
++++ b/src/common/utils.h
+@@ -13,14 +13,34 @@ void ShowDump(const void* buffer, size_t length);
+ 
+ void findfile(const char *p, const char *pat, void (func)(const char*));
+ bool exists(const char* filename);
+ 
+ //Caps values to min/max
+ #define cap_value(a, min, max) ((a >= max) ? max : (a <= min) ? min : a)
+ 
++
++#define add2limit(a, b, max) \
++	do { \
++		if( (max - a) < b ) { \
++			a = max; \
++		} else { \
++			a += b; \
++		} \
++	} while(0)
++
++#define sub2limit(a, b, min) \
++	do { \
++		if( (b + min) > a ) { \
++			a = min; \
++		} else { \
++			a -= b; \
++		} \
++	} while(0)
++
++
+ /// calculates the value of A / B, in percent (rounded down)
+ unsigned int get_percentage(const unsigned int A, const unsigned int B);
+ 
+ //////////////////////////////////////////////////////////////////////////
+ // byte word dword access [Shinomori]
+ //////////////////////////////////////////////////////////////////////////
+ 
+diff --git a/src/map/battle.c b/src/map/battle.c
+index 8ba1a47..73d0cdf 100644
+--- a/src/map/battle.c
++++ b/src/map/battle.c
+@@ -229,26 +229,26 @@ int battle_delay_damage_sub(int tid, unsigned int tick, int id, intptr_t data) {
+ 		src = map_id2bl(dat->src_id);
+ 
+ 		if( src && target->m == src->m &&
+ 			(target->type != BL_PC || ((TBL_PC*)target)->invincible_timer == INVALID_TIMER) &&
+ 			check_distance_bl(src, target, dat->distance) ) //Check to see if you haven't teleported. [Skotlex]
+ 		{
+ 			map_freeblock_lock();
+-			status_fix_damage(src, target, dat->damage, dat->delay);
++			status_fix_damage(src, target, dat->damage, dat->delay,dat->skill_id);
+ 			if( dat->attack_type && !status_isdead(target) && dat->additional_effects )
+ 				skill_additional_effect(src,target,dat->skill_id,dat->skill_lv,dat->attack_type,dat->dmg_lv,tick);
+ 			if( dat->dmg_lv > ATK_BLOCK && dat->attack_type )
+ 				skill_counter_additional_effect(src,target,dat->skill_id,dat->skill_lv,dat->attack_type,tick);
+ 			map_freeblock_unlock();
+ 		} else if( !src && dat->skill_id == CR_REFLECTSHIELD ) {
+ 			/**
+ 			 * it was monster reflected damage, and the monster died, we pass the damage to the character as expected
+ 			 **/
+ 			map_freeblock_lock();
+-			status_fix_damage(target, target, dat->damage, dat->delay);
++			status_fix_damage(target, target, dat->damage, dat->delay,dat->skill_id);
+ 			map_freeblock_unlock();
+ 		}
+ 	}
+ 	ers_free(delay_damage_ers, dat);
+ 	return 0;
+ }
+ 
+@@ -262,15 +262,15 @@ int battle_delay_damage (unsigned int tick, int amotion, struct block_list *src,
+ 	sc = status_get_sc(target);
+ 
+ 	if( sc && sc->data[SC_DEVOTION] && damage > 0 && skill_id != PA_PRESSURE && skill_id != CR_REFLECTSHIELD )
+ 		damage = 0;
+ 
+ 	if ( !battle_config.delay_battle_damage || amotion <= 1 ) {
+ 		map_freeblock_lock();
+-		status_fix_damage(src, target, damage, ddelay); // We have to seperate here between reflect damage and others [icescope]
++		status_fix_damage(src, target, damage, ddelay, skill_id); // We have to seperate here between reflect damage and others [icescope]
+ 		if( attack_type && !status_isdead(target) && additional_effects )
+ 			skill_additional_effect(src, target, skill_id, skill_lv, attack_type, dmg_lv, gettick());
+ 		if( dmg_lv > ATK_BLOCK && attack_type )
+ 			skill_counter_additional_effect(src, target, skill_id, skill_lv, attack_type, gettick());
+ 		map_freeblock_unlock();
+ 		return 0;
+ 	}
+@@ -1667,16 +1667,22 @@ void battle_consume_ammo(TBL_PC*sd, int skill, int lv)
+ 
+ 	if (skill) {
+ 		qty = skill_get_ammo_qty(skill, lv);
+ 		if (!qty) qty = 1;
+ 	}
+ 
+ 	if(sd->equip_index[EQI_AMMO]>=0) //Qty check should have been done in skill_check_condition
++	{	
+ 		pc_delitem(sd,sd->equip_index[EQI_AMMO],qty,0,1,LOG_TYPE_CONSUME);
+-
++		/*[Sanasol] WoE*/
++		if( sd->status.guild_id && map_allowed_woe(sd->bl.m) )
++		{
++			add2limit(sd->status.woe_statistics.ammo_used, qty, UINT_MAX);
++		}
++	}
+ 	sd->state.arrow_atk = 0;
+ }
+ 
+ static int battle_range_type(struct block_list *src, struct block_list *target, uint16 skill_id, uint16 skill_lv)
+ {
+ 	// [Akinari] , [Xynvaroth]: Traps are always short range.
+ 	if( skill_get_inf2( skill_id ) & INF2_TRAP )
+@@ -4307,15 +4313,15 @@ struct Damage battle_calc_weapon_final_atk_modifiers(struct Damage wd, struct bl
+ 			((TBL_PC *)src)->weapontype1 == W_DAGGER ||
+ 			((TBL_PC *)src)->weapontype1 == W_1HSWORD ||
+ 			((TBL_PC *)src)->status.weapon == W_2HSWORD
+ 		)) &&
+ 		rnd()%100 < tsc->data[SC_REJECTSWORD]->val2
+ 		) {
+ 		ATK_RATER(wd.damage, 50)
+-		status_fix_damage(target,src,wd.damage,clif_damage(target,src,gettick(),0,0,wd.damage,0,0,0));
++		status_fix_damage(target,src,wd.damage,clif_damage(target,src,gettick(),0,0,wd.damage,0,0,0),skill_id);
+ 		clif_skill_nodamage(target,target,ST_REJECTSWORD,tsc->data[SC_REJECTSWORD]->val1,1);
+ 		if( --(tsc->data[SC_REJECTSWORD]->val3) <= 0 )
+ 			status_change_end(target, SC_REJECTSWORD, INVALID_TIMER);
+ 	}
+ 
+ 	if( tsc && tsc->data[SC_CRESCENTELBOW] && !is_boss(src) && rnd()%100 < tsc->data[SC_CRESCENTELBOW]->val2 ) {
+ 		//ATK [{(Target HP / 100) x Skill Level} x Caster Base Level / 125] % + [Received damage x {1 + (Skill Level x 0.2)}]
+@@ -6091,15 +6097,15 @@ int battle_damage_area( struct block_list *bl, va_list ap) {
+ 	if( bl != src && battle_check_target(src,bl,BCT_ENEMY) > 0 ) {
+ 		map_freeblock_lock();
+ 		if( src->type == BL_PC )
+ 			battle_drain((TBL_PC*)src, bl, damage, damage, status_get_race(bl), status_get_class_(bl));
+ 		if( amotion )
+ 			battle_delay_damage(tick, amotion,src,bl,0,CR_REFLECTSHIELD,0,damage,ATK_DEF,0,true);
+ 		else
+-			status_fix_damage(src,bl,damage,0);
++			status_fix_damage(src,bl,damage,0,0);
+ 		clif_damage(bl,bl,tick,amotion,dmotion,damage,1,ATK_BLOCK,0);
+ 		skill_additional_effect(src, bl, CR_REFLECTSHIELD, 1, BF_WEAPON|BF_SHORT|BF_NORMAL,ATK_DEF,tick);
+ 		map_freeblock_unlock();
+ 	}
+ 
+ 	return 0;
+ }
+@@ -6334,15 +6340,15 @@ enum damage_lv battle_weapon_attack(struct block_list* src, struct block_list* t
+ 
+ 			if( d_bl && (
+ 				(d_bl->type == BL_MER && ((TBL_MER*)d_bl)->master && ((TBL_MER*)d_bl)->master->bl.id == target->id) ||
+ 				(d_bl->type == BL_PC && ((TBL_PC*)d_bl)->devotion[sce->val2] == target->id)
+ 				) && check_distance_bl(target, d_bl, sce->val3) )
+ 			{
+ 				clif_damage(d_bl, d_bl, gettick(), 0, 0, damage, 0, 0, 0);
+-				status_fix_damage(NULL, d_bl, damage, 0);
++				status_fix_damage(NULL, d_bl, damage, 0,0);
+ 			}
+ 			else
+ 				status_change_end(target, SC_DEVOTION, INVALID_TIMER);
+ 		} else if( tsc->data[SC_CIRCLE_OF_FIRE_OPTION] && (wd.flag&BF_SHORT) && target->type == BL_PC ) {
+ 			struct elemental_data *ed = ((TBL_PC*)target)->ed;
+ 			if( ed ) {
+ 				clif_skill_damage(&ed->bl, target, tick, status_get_amotion(src), 0, -30000, 1, EL_CIRCLE_OF_FIRE, tsc->data[SC_CIRCLE_OF_FIRE_OPTION]->val1, 6);
+diff --git a/src/map/clif.c b/src/map/clif.c
+index 2e0479d..852348d 100644
+--- a/src/map/clif.c
++++ b/src/map/clif.c
+@@ -4337,14 +4337,16 @@ int clif_damage(struct block_list* src, struct block_list* dst, unsigned int tic
+ #else
+ 	const int cmd = 0x2e1;
+ #endif
+ 
+ 	nullpo_ret(src);
+ 	nullpo_ret(dst);
+ 
++	pc_record_maxdamage(src, dst, damage + damage2);
++
+ 	type = clif_calc_delay(type,div,damage+damage2,ddelay);
+ 	sc = status_get_sc(dst);
+ 	if(sc && sc->count) {
+ 		if(sc->data[SC_HALLUCINATION]) {
+ 			if(damage) damage = damage*(sc->data[SC_HALLUCINATION]->val2) + rnd()%100;
+ 			if(damage2) damage2 = damage2*(sc->data[SC_HALLUCINATION]->val2) + rnd()%100;
+ 		}
+@@ -5027,19 +5029,41 @@ void clif_skill_cooldown(struct map_session_data *sd, uint16 skill_id, unsigned
+ /// Skill attack effect and damage.
+ /// 0114 <skill id>.W <src id>.L <dst id>.L <tick>.L <src delay>.L <dst delay>.L <damage>.W <level>.W <div>.W <type>.B (ZC_NOTIFY_SKILL)
+ /// 01de <skill id>.W <src id>.L <dst id>.L <tick>.L <src delay>.L <dst delay>.L <damage>.L <level>.W <div>.W <type>.B (ZC_NOTIFY_SKILL2)
+ int clif_skill_damage(struct block_list *src,struct block_list *dst,unsigned int tick,int sdelay,int ddelay,int64 sdamage,int div,uint16 skill_id,uint16 skill_lv,int type)
+ {
+ 	unsigned char buf[64];
+ 	struct status_change *sc;
++	struct map_session_data *sd;
+ 	int damage = (int)cap_value(sdamage,INT_MIN,INT_MAX);
+ 
+ 	nullpo_ret(src);
+ 	nullpo_ret(dst);
+ 
++	/*[Sanasol] WoE*/
++	pc_record_maxdamage(src, dst, damage);
++	sd = BL_CAST(BL_PC, src);
++	if( sd && skill_id == CR_ACIDDEMONSTRATION )
++	{
++		if( damage > 0 )
++		{
++			if( sd->status.guild_id && map_allowed_woe(src->m) )
++			{
++				add2limit(sd->status.woe_statistics.acid_demostration, 1, UINT32_MAX);
++			}
++		}
++		else
++		{
++			if( sd->status.guild_id && map_allowed_woe(src->m) )
++			{
++				add2limit(sd->status.woe_statistics.acid_demostration_fail, 1, UINT32_MAX);
++			}
++		}
++	}
++
+ 	type = clif_calc_delay(type,div,damage,ddelay);
+ 	sc = status_get_sc(dst);
+ 	if(sc && sc->count) {
+ 		if(sc->data[SC_HALLUCINATION] && damage)
+ 			damage = damage*(sc->data[SC_HALLUCINATION]->val2) + rnd()%100;
+ 	}
+ 
+diff --git a/src/map/itemdb.h b/src/map/itemdb.h
+index 1011d39..822d60e 100644
+--- a/src/map/itemdb.h
++++ b/src/map/itemdb.h
+@@ -47,14 +47,15 @@ enum item_itemid {
+ 	ITEMID_YELLOW_SLIM_POTION			= 546,
+ 	ITEMID_WHITE_SLIM_POTION			= 547,
+ 	ITEMID_WING_OF_FLY					= 601,
+ 	ITEMID_WING_OF_BUTTERFLY			= 602,
+ 	ITEMID_BRANCH_OF_DEAD_TREE			= 604,
+ 	ITEMID_ANODYNE						= 605,
+ 	ITEMID_ALOEBERA						= 606,
++	ITEMID_POISONBOTTLE					= 678,
+ 	ITEMID_EMPTY_BOTTLE					= 713,
+ 	ITEMID_EMPERIUM						= 714,
+ 	ITEMID_YELLOW_GEMSTONE				= 715,
+ 	ITEMID_RED_GEMSTONE					= 716,
+ 	ITEMID_BLUE_GEMSTONE				= 717,
+ 	ITEMID_ALCOHOL						= 970,
+ 	ITEMID_ORIDECON						= 984,
+diff --git a/src/map/log.c b/src/map/log.c
+index 8924ffd..2754a68 100644
+--- a/src/map/log.c
++++ b/src/map/log.c
+@@ -232,14 +232,28 @@ void log_pick(int id, int16 m, e_log_pick_type type, int amount, struct item* it
+ void log_pick_pc(struct map_session_data* sd, e_log_pick_type type, int amount, struct item* itm)
+ {
+ 	nullpo_retv(sd);
+ 	log_pick(sd->status.char_id, sd->bl.m, type, amount, itm);
+ }
+ 
+ 
++int log_woe_kill(struct map_session_data *ssd, struct map_session_data *tsd, int skill)
++{
++	char esc_sname[NAME_LENGTH*2+1];
++	char esc_tname[NAME_LENGTH*2+1];
++
++	Sql_EscapeStringLen(mmysql_handle, esc_sname, ssd->status.name, strnlen(ssd->status.name, NAME_LENGTH));
++	Sql_EscapeStringLen(mmysql_handle, esc_tname, tsd->status.name, strnlen(tsd->status.name, NAME_LENGTH));
++
++	if( SQL_ERROR == Sql_Query(mmysql_handle,"INSERT DELAYED INTO `char_woe_kills` (`time`,`killer`,`killer_id`,`killed`,`killed_id`,`map`,`skill`) VALUES (NOW(), '%s', '%d', '%s', '%d', '%s', '%d')", esc_sname, ssd->status.char_id, esc_tname, tsd->status.char_id, map[tsd->bl.m].name, skill) )
++		Sql_ShowDebug(mmysql_handle);
++
++	return 0;
++}
++
+ /// logs item transactions (monsters)
+ void log_pick_mob(struct mob_data* md, e_log_pick_type type, int amount, struct item* itm)
+ {
+ 	nullpo_retv(md);
+ 	log_pick(md->mob_id, md->bl.m, type, amount, itm);
+ }
+ 
+diff --git a/src/map/log.h b/src/map/log.h
+index 35bc4ad..5455792 100644
+--- a/src/map/log.h
++++ b/src/map/log.h
+@@ -63,14 +63,16 @@ void log_pick_pc(struct map_session_data* sd, e_log_pick_type type, int amount,
+ void log_pick_mob(struct mob_data* md, e_log_pick_type type, int amount, struct item* itm);
+ void log_zeny(struct map_session_data* sd, e_log_pick_type type, struct map_session_data* src_sd, int amount);
+ void log_cash( struct map_session_data* sd, e_log_pick_type type, e_log_cash_type cash_type, int amount );
+ void log_npc(struct map_session_data* sd, const char *message);
+ void log_chat(e_log_chat_type type, int type_id, int src_charid, int src_accid, const char* map, int x, int y, const char* dst_charname, const char* message);
+ void log_atcommand(struct map_session_data* sd, const char* message);
+ 
++int log_woe_kill(struct map_session_data *ssd, struct map_session_data *tsd, int skill);
++
+ /// old, but useful logs
+ void log_branch(struct map_session_data* sd);
+ void log_mvpdrop(struct map_session_data* sd, int monster_id, int* log_mvp);
+ 
+ int log_config_read(const char* cfgName);
+ 
+ extern struct Log_Config
+diff --git a/src/map/map.h b/src/map/map.h
+index ea74e63..b599bcb 100644
+--- a/src/map/map.h
++++ b/src/map/map.h
+@@ -267,14 +267,17 @@ enum {
+ //Specifies maps that have special GvG/WoE restrictions
+ #define map_flag_gvg(m) (map[m].flag.gvg || ((agit_flag || agit2_flag) && map[m].flag.gvg_castle))
+ //Specifies if the map is tagged as GvG/WoE (regardless of agit_flag status)
+ #define map_flag_gvg2(m) (map[m].flag.gvg || map[m].flag.gvg_castle)
+ // No Kill Steal Protection
+ #define map_flag_ks(m) (map[m].flag.town || map[m].flag.pvp || map[m].flag.gvg || map[m].flag.battleground)
+ 
++#define map_allowed_woe(m) (agit_flag && map[m].flag.gvg && map[m].flag.gvg_castle)
++
++
+ //This stackable implementation does not means a BL can be more than one type at a time, but it's
+ //meant to make it easier to check for multiple types at a time on invocations such as map_foreach* calls [Skotlex]
+ enum bl_type {
+ 	BL_NUL   = 0x000,
+ 	BL_PC    = 0x001,
+ 	BL_MOB   = 0x002,
+ 	BL_PET   = 0x004,
+diff --git a/src/map/mob.c b/src/map/mob.c
+index 7859912..545970c 100644
+--- a/src/map/mob.c
++++ b/src/map/mob.c
+@@ -2587,14 +2587,16 @@ int mob_dead(struct mob_data *md, struct block_list *src, int type)
+ 				case BL_MER:
+ 				case BL_ELEM:
+ 				case BL_MOB:
+ 				    sd = BL_CAST(BL_PC,battle_get_master(src));
+ 			}
+ 		}
+ 
++		pc_record_mobkills(sd, md);
++
+ 		if( sd ) {
+ 			if( sd->mission_mobid == md->mob_id) { //TK_MISSION [Skotlex]
+ 				if( ++sd->mission_count >= 100 && (temp = mob_get_random_id(0, 0xE, sd->status.base_level)) ) {
+ 					pc_addfame(sd, 1);
+ 					sd->mission_mobid = temp;
+ 					pc_setglobalreg(sd,"TK_MISSION_ID", temp);
+ 					sd->mission_count = 0;
+diff --git a/src/map/pc.c b/src/map/pc.c
+index e6638c3..0e4fec4 100755
+--- a/src/map/pc.c
++++ b/src/map/pc.c
+@@ -6770,14 +6770,161 @@ void pc_damage(struct map_session_data *sd,struct block_list *src,unsigned int h
+ 
+ 	if( sd->status.ele_id > 0 )
+ 		elemental_set_target(sd,src);
+ 
+ 	sd->canlog_tick = gettick();
+ }
+ 
++
++void pc_record_mobkills(struct map_session_data *sd, struct mob_data *md)
++{
++	int type = 0;
++
++	if( !sd ) return;
++
++	if( map_allowed_woe(sd->bl.m) )
++	{
++		switch( md->mob_id )
++		{
++		case MOBID_EMPERIUM:
++			add2limit(sd->status.woe_statistics.emperium_kill, 1, USHRT_MAX);
++			break;
++		case 1905:
++			add2limit(sd->status.woe_statistics.barricade_kill, 1, USHRT_MAX);
++			break;
++		case MOBID_GUARIDAN_STONE1:
++		case MOBID_GUARIDAN_STONE2:
++			add2limit(sd->status.woe_statistics.gstone_kill, 1, USHRT_MAX);
++			break;
++		case 1285:
++		case 1286:
++		case 1287:
++		case 1899:
++		case 1900:
++			add2limit(sd->status.woe_statistics.guardian_kill, 1, USHRT_MAX);
++			break;
++		}
++	}
++}
++
++void pc_record_maxdamage(struct block_list *src, struct block_list *dst, int damage)
++{
++	struct block_list *s_bl;
++	struct map_session_data *sd;
++
++	if( !src || !dst || src == dst || dst->type != BL_PC || damage <= 0 )
++		return;
++
++	if( (s_bl = battle_get_master(src)) == NULL )
++		s_bl = src;
++
++	if( s_bl->type != BL_PC )
++		return;
++
++	if( (sd = BL_CAST(BL_PC, s_bl)) != NULL )
++	{
++		if( map_allowed_woe(src->m) && sd->status.woe_statistics.top_damage < damage )
++			sd->status.woe_statistics.top_damage = damage;
++	}
++}
++
++void pc_record_damage(struct block_list *src, struct block_list *dst, int damage)
++{
++	struct block_list *s_bl;
++	struct map_session_data *sd;
++
++	if( !src || !dst || src == dst || damage <= 0 )
++		return;
++
++	if( (s_bl = battle_get_master(src)) == NULL )
++		s_bl = src;
++
++	if( s_bl->type != BL_PC )
++		return;
++
++	sd = BL_CAST(BL_PC, s_bl);
++
++	switch( dst->type )
++	{
++		case BL_PC:
++			if( map_allowed_woe(src->m) )
++			{
++				add2limit(sd->status.woe_statistics.damage_done, damage, UINT_MAX);
++				add2limit(((TBL_PC*)dst)->status.woe_statistics.damage_received, damage, UINT_MAX);
++			}
++			break;
++		case BL_MOB:
++		{
++			struct mob_data *md = BL_CAST(BL_MOB, dst);
++			if( map_allowed_woe(src->m) && md->guardian_data )
++			{
++				switch( md->mob_id )
++				{
++					case MOBID_EMPERIUM:
++						add2limit(sd->status.woe_statistics.emperium_damage, damage, UINT_MAX);
++						break;
++					case 1905:
++						add2limit(sd->status.woe_statistics.barricade_damage, damage, UINT_MAX);
++						break;
++					case MOBID_GUARIDAN_STONE1:
++					case MOBID_GUARIDAN_STONE2:
++						add2limit(sd->status.woe_statistics.gstone_damage, damage, UINT_MAX);
++						break;
++					default:
++						add2limit(sd->status.woe_statistics.guardian_damage, damage, UINT_MAX);
++						break;
++				}
++			}
++			break;
++		}
++	}
++}
++void pc_calc_ranking(struct map_session_data *tsd, struct map_session_data *ssd, int skill)
++{
++	int m, Elo;
++	char output[256];
++
++	if( !tsd || !ssd || tsd == ssd )
++		return;
++
++	m = ssd->bl.m;
++	if( map_allowed_woe(m) )
++	{
++		/*==========================================
++		 * Guild Ranking - War of Emperium
++		 *------------------------------------------*/
++		struct guild *tg, *sg;
++		struct guild_castle *gc = guild_mapindex2gc(map[m].index);
++
++		if( gc == NULL || gc->guild_id <= 0 )
++			return;
++
++		if( (tg = guild_search(tsd->status.guild_id)) == NULL || (sg = guild_search(ssd->status.guild_id)) == NULL )
++			return;
++
++		// Single Player Ranking WoE
++		Elo = (int)(50. / (1 + pow(10., (int)(ssd->status.woe_statistics.score - tsd->status.woe_statistics.score) / 2000.)));
++		add2limit(ssd->status.woe_statistics.score, Elo, 4000);
++		sub2limit(tsd->status.woe_statistics.score, Elo, 0);
++		add2limit(ssd->status.woe_statistics.kill_count, 1, USHRT_MAX);
++		add2limit(tsd->status.woe_statistics.death_count, 1, USHRT_MAX);
++
++		log_woe_kill(ssd,tsd,skill);
++
++		//Killer msg
++		sprintf(output,"( You Kill the %s [%s] using <%s> )", job_name(tsd->status.class_), tsd->status.name, ( skill ? skill_get_desc(skill) : "Melee/Reflect/Effect" ));
++		clif_disp_onlyself(ssd,output,strlen(output));
++		
++		//Target msg
++		sprintf(output,"( The %s [%s] kill you using <%s> )", job_name(ssd->status.class_), ssd->status.name, ( skill ? skill_get_desc(skill) : "Melee/Reflect/Effect" ));
++		clif_disp_onlyself(tsd,output,strlen(output));
++	}
++}
++
++
+ int pc_close_npc_timer(int tid, unsigned int tick, int id, intptr_t data)
+ {
+ 	TBL_PC *sd = map_id2sd(id);
+ 	if(sd) pc_close_npc(sd,data);
+ 	return 0;
+ }
+ /*
+@@ -6818,15 +6965,15 @@ void pc_close_npc(struct map_session_data *sd,int flag)
+ 		}
+ 	}
+ }
+ 
+ /*==========================================
+  * Invoked when a player has negative current hp
+  *------------------------------------------*/
+-int pc_dead(struct map_session_data *sd,struct block_list *src)
++int pc_dead(struct map_session_data *sd,struct block_list *src, int skill)
+ {
+ 	int i=0,k=0;
+ 	unsigned int tick = gettick();
+ 
+ 	// Activate Steel body if a super novice dies at 99+% exp [celest]
+ 	// Super Novices have no kill or die functions attached when saved by their angel
+ 	if ((sd->class_&MAPID_UPPERMASK) == MAPID_SUPER_NOVICE && !sd->state.snovice_dead_flag) {
+@@ -6945,14 +7092,15 @@ int pc_dead(struct map_session_data *sd,struct block_list *src)
+ 			src = battle_get_master(src);
+ 			break;
+ 	}
+ 
+ 	if (src && src->type == BL_PC) {
+ 		struct map_session_data *ssd = (struct map_session_data *)src;
+ 		pc_setparam(ssd, SP_KILLEDRID, sd->bl.id);
++		pc_calc_ranking(sd, ssd, skill); // Ranking System
+ 		npc_script_event(ssd, NPCE_KILLPC);
+ 
+ 		if (battle_config.pk_mode&2) {
+ 			ssd->status.manner -= 5;
+ 			if(ssd->status.manner < 0)
+ 				sc_start(&sd->bl,src,SC_NOCHAT,100,0,0);
+ #if 0
+@@ -7490,23 +7638,29 @@ int pc_itemheal(struct map_session_data *sd,int itemid, int hp,int sp)
+ 		}
+ 		if(bonus!=100)
+ 			hp = hp * bonus / 100;
+ 
+ 		// Recovery Potion
+ 		if( sd->sc.data[SC_INCHEALRATE] )
+ 			hp += (int)(hp * sd->sc.data[SC_INCHEALRATE]->val1/100.);
++
++		if( sd->status.guild_id && map_allowed_woe(sd->bl.m) )
++			add2limit(sd->status.woe_statistics.hp_heal_potions, 1, UINT_MAX);
+ 	}
+ 	if(sp) {
+ 		bonus = 100 + (sd->battle_status.int_<<1)
+ 			+ pc_checkskill(sd,MG_SRECOVERY)*10
+ 			+ pc_checkskill(sd,AM_LEARNINGPOTION)*5;
+ 		if (potion_flag > 1)
+ 			bonus += bonus*(potion_flag-1)*50/100;
+ 		if(bonus != 100)
+ 			sp = sp * bonus / 100;
++
++		if( sd->status.guild_id && map_allowed_woe(sd->bl.m) )
++			add2limit(sd->status.woe_statistics.sp_heal_potions, 1, UINT_MAX);
+ 	}
+ 	if( sd->sc.count ) {
+ 		if ( sd->sc.data[SC_CRITICALWOUND] ) {
+ 			hp -= hp * sd->sc.data[SC_CRITICALWOUND]->val2 / 100;
+ 			sp -= sp * sd->sc.data[SC_CRITICALWOUND]->val2 / 100;
+ 		}
+ 
+diff --git a/src/map/pc.h b/src/map/pc.h
+index c2fce11..fe8e3bc 100644
+--- a/src/map/pc.h
++++ b/src/map/pc.h
+@@ -917,15 +917,15 @@ void pc_check_available_item(struct map_session_data *sd);
+ int pc_useitem(struct map_session_data*,int);
+ 
+ int pc_skillatk_bonus(struct map_session_data *sd, uint16 skill_id);
+ int pc_skillheal_bonus(struct map_session_data *sd, uint16 skill_id);
+ int pc_skillheal2_bonus(struct map_session_data *sd, uint16 skill_id);
+ 
+ void pc_damage(struct map_session_data *sd,struct block_list *src,unsigned int hp, unsigned int sp);
+-int pc_dead(struct map_session_data *sd,struct block_list *src);
++int pc_dead(struct map_session_data *sd,struct block_list *src, int skill);
+ void pc_revive(struct map_session_data *sd,unsigned int hp, unsigned int sp);
+ void pc_heal(struct map_session_data *sd,unsigned int hp,unsigned int sp, int type);
+ int pc_itemheal(struct map_session_data *sd,int itemid, int hp,int sp);
+ int pc_percentheal(struct map_session_data *sd,int,int);
+ int pc_jobchange(struct map_session_data *,int, int);
+ void pc_setoption(struct map_session_data *,int);
+ bool pc_setcart(struct map_session_data* sd, int type);
+@@ -1041,14 +1041,19 @@ int map_day_timer(int tid, unsigned int tick, int id, intptr_t data); // by [yor
+ int map_night_timer(int tid, unsigned int tick, int id, intptr_t data); // by [yor]
+ 
+ // Rental System
+ void pc_inventory_rentals(struct map_session_data *sd);
+ int pc_inventory_rental_clear(struct map_session_data *sd);
+ void pc_inventory_rental_add(struct map_session_data *sd, int seconds);
+ 
++// WoE Ranking Stats
++void pc_record_damage(struct block_list *src, struct block_list *dst, int damage);
++void pc_record_maxdamage(struct block_list *src, struct block_list *dst, int damage);
++void pc_record_mobkills(struct map_session_data *sd, struct mob_data *md);
++
+ int pc_read_motd(void); // [Valaris]
+ int pc_disguise(struct map_session_data *sd, int class_);
+ bool pc_isautolooting(struct map_session_data *sd, int nameid);
+ 
+ void pc_overheat(struct map_session_data *sd, int val);
+ 
+ int pc_banding(struct map_session_data *sd, uint16 skill_lv);
+diff --git a/src/map/skill.c b/src/map/skill.c
+index bc4a9f3..2717dbf 100755
+--- a/src/map/skill.c
++++ b/src/map/skill.c
+@@ -2718,15 +2718,15 @@ int64 skill_attack (int attack_type, struct block_list* src, struct block_list *
+ 		damage = 1;
+ 
+ 	if( damage && tsc && tsc->data[SC_GENSOU] && dmg.flag&BF_MAGIC ){
+ 		struct block_list *nbl;
+ 		nbl = battle_getenemyarea(bl,bl->x,bl->y,2,BL_CHAR,bl->id);
+ 		if( nbl ){ // Only one target is chosen.
+ 			damage = damage / 2; // Deflect half of the damage to a target nearby
+-			clif_skill_damage(bl, nbl, tick, status_get_amotion(src), 0, status_fix_damage(bl,nbl,damage,0), dmg.div_, OB_OBOROGENSOU_TRANSITION_ATK, -1, 6);
++			clif_skill_damage(bl, nbl, tick, status_get_amotion(src), 0, status_fix_damage(bl,nbl,damage,0,skill_id), dmg.div_, OB_OBOROGENSOU_TRANSITION_ATK, -1, 6);
+ 		}
+ 	}
+ 
+ 	//Skill hit type
+ 	type=(skill_id==0)?5:skill_get_hit(skill_id);
+ 
+ 	switch(skill_id){
+@@ -2893,15 +2893,15 @@ int64 skill_attack (int attack_type, struct block_list* src, struct block_list *
+ 	}
+ 
+ 	shadow_flag = skill_check_shadowform(bl, damage, dmg.div_);
+ 
+ 	if( !dmg.amotion ) {
+ 		//Instant damage
+ 		if( (!tsc || (!tsc->data[SC_DEVOTION] && skill_id != CR_REFLECTSHIELD)) && !shadow_flag )
+-			status_fix_damage(src,bl,damage,dmg.dmotion); //Deal damage before knockback to allow stuff like firewall+storm gust combo.
++			status_fix_damage(src,bl,damage,dmg.dmotion,skill_id); //Deal damage before knockback to allow stuff like firewall+storm gust combo.
+ 		if( !status_isdead(bl) && additional_effects )
+ 			skill_additional_effect(src,bl,skill_id,skill_lv,dmg.flag,dmg.dmg_lv,tick);
+ 		if( damage > 0 ) //Counter status effects [Skotlex]
+ 			skill_counter_additional_effect(src,bl,skill_id,skill_lv,dmg.flag,tick);
+ 	}
+ 
+ 	//Only knockback if it's still alive, otherwise a "ghost" is left behind. [Skotlex]
+@@ -2982,26 +2982,26 @@ int64 skill_attack (int attack_type, struct block_list* src, struct block_list *
+ 		if( d_bl && (
+ 			(d_bl->type == BL_MER && ((TBL_MER*)d_bl)->master && ((TBL_MER*)d_bl)->master->bl.id == bl->id) ||
+ 			(d_bl->type == BL_PC && ((TBL_PC*)d_bl)->devotion[sce->val2] == bl->id)
+ 			) && check_distance_bl(bl, d_bl, sce->val3) )
+ 		{
+ 			if(!rmdamage){
+ 				clif_damage(d_bl,d_bl, gettick(), 0, 0, damage, 0, 0, 0);
+-				status_fix_damage(NULL,d_bl, damage, 0);
++				status_fix_damage(NULL,d_bl, damage, 0, 0);
+ 			} else {//Reflected magics are done directly on the target not on paladin
+ 				//This check is only for magical skill.
+ 				//For BF_WEAPON skills types track var rdamage and function battle_calc_return_damage
+ 				clif_damage(bl,bl, gettick(), 0, 0, damage, 0, 0, 0);
+-				status_fix_damage(bl,bl, damage, 0);
++				status_fix_damage(bl,bl, damage, 0,0);
+ 			}
+ 		}
+ 		else {
+ 			status_change_end(bl, SC_DEVOTION, INVALID_TIMER);
+ 			if( !dmg.amotion )
+-				status_fix_damage(src,bl,damage,dmg.dmotion);
++				status_fix_damage(src,bl,damage,dmg.dmotion, 0);
+ 		}
+ 	}
+ 
+ 	if(damage > 0 && !(tstatus->mode&MD_BOSS)) {
+ 		if( skill_id == RG_INTIMIDATE ) {
+ 			int rate = 50 + skill_lv * 5;
+ 			rate = rate + (status_get_lv(src) - status_get_lv(bl));
+@@ -5360,14 +5360,25 @@ int skill_castend_nodamage_id (struct block_list *src, struct block_list *bl, ui
+ 
+ 			if(sd && dstsd && heal > 0 && sd != dstsd && battle_config.heal_exp > 0){
+ 				heal_get_jobexp = heal_get_jobexp * battle_config.heal_exp / 100;
+ 				if (heal_get_jobexp <= 0)
+ 					heal_get_jobexp = 1;
+ 				pc_gainexp (sd, bl, 0, heal_get_jobexp, false);
+ 			}
++
++			if( sd && dstsd && heal > 0 && sd != dstsd )
++			{
++				if( sd->status.guild_id && map_allowed_woe(src->m) )
++				{
++					if( sd->status.guild_id == dstsd->status.guild_id || guild_isallied(sd->status.guild_id, dstsd->status.guild_id) )
++						add2limit(sd->status.woe_statistics.healing_done, heal_get_jobexp, UINT_MAX);
++					else
++						add2limit(sd->status.woe_statistics.wrong_healing_done, heal_get_jobexp, UINT_MAX);
++				}
++			}
+ 		}
+ 		break;
+ 
+ 	case PR_REDEMPTIO:
+ 		if (sd && !(flag&1)) {
+ 			if (sd->status.party_id == 0) {
+ 				clif_skill_fail(sd,skill_id,USESKILL_FAIL_LEVEL,0);
+@@ -6226,15 +6237,15 @@ int skill_castend_nodamage_id (struct block_list *src, struct block_list *bl, ui
+ 		map_delblock(src); //Required to prevent chain-self-destructions hitting back.
+ 		map_foreachinrange(skill_area_sub, bl,
+ 			skill_get_splash(skill_id, skill_lv), splash_target(src),
+ 			src, skill_id, skill_lv, tick, flag|i,
+ 			skill_castend_damage_id);
+ 		if(map_addblock(src))
+ 			return 1;
+-		status_damage(src, src, sstatus->max_hp,0,0,1);
++		status_damage_(src, src, sstatus->max_hp,0,0,1,skill_id);
+ 		break;
+ 
+ 	case AL_ANGELUS:
+ 	case PR_MAGNIFICAT:
+ 	case PR_GLORIA:
+ 	case SN_WINDWALK:
+ 	case CASH_BLESSING:
+@@ -6548,15 +6559,15 @@ int skill_castend_nodamage_id (struct block_list *src, struct block_list *bl, ui
+ 		clif_skill_nodamage(src,bl,skill_id,skill_lv,1);
+ 		break;
+ 
+ 	case MER_SCAPEGOAT:
+ 		if( mer && mer->master )
+ 		{
+ 			status_heal(&mer->master->bl, mer->battle_status.hp, 0, 2);
+-			status_damage(src, src, mer->battle_status.max_hp, 0, 0, 1);
++			status_damage_(src, src, mer->battle_status.max_hp, 0, 0, 1, skill_id);
+ 		}
+ 		break;
+ 
+ 	case MER_ESTIMATION:
+ 		if( !mer )
+ 			break;
+ 		sd = mer->master;
+@@ -7679,15 +7690,15 @@ int skill_castend_nodamage_id (struct block_list *src, struct block_list *bl, ui
+ 					sc_start(src,bl,SC_INCMATKRATE,100,-50,skill_get_time2(skill_id,skill_lv));
+ 					break;
+ 				case 2:	// all buffs removed
+ 					status_change_clear_buffs(bl,1);
+ 					break;
+ 				case 3:	// 1000 damage, random armor destroyed
+ 					{
+-						status_fix_damage(src, bl, 1000, 0);
++						status_fix_damage(src, bl, 1000, 0, skill_id);
+ 						clif_damage(src,bl,tick,0,0,1000,0,0,0);
+ 						if( !status_isdead(bl) ) {
+ 							int where[] = { EQP_ARMOR, EQP_SHIELD, EQP_HELM, EQP_SHOES, EQP_GARMENT };
+ 							skill_break_equip(src,bl, where[rnd()%5], 10000, BCT_ENEMY);
+ 						}
+ 					}
+ 					break;
+@@ -7716,22 +7727,22 @@ int skill_castend_nodamage_id (struct block_list *src, struct block_list *bl, ui
+ 					sc_start(src,bl,SC_CURSE,100,skill_lv,skill_get_time2(skill_id,skill_lv));
+ 					sc_start(src,bl,SC_POISON,100,skill_lv,skill_get_time2(skill_id,skill_lv));
+ 					break;
+ 				case 9:	// confusion
+ 					sc_start(src,bl,SC_CONFUSION,100,skill_lv,skill_get_time2(skill_id,skill_lv));
+ 					break;
+ 				case 10:	// 6666 damage, atk matk halved, cursed
+-					status_fix_damage(src, bl, 6666, 0);
++					status_fix_damage(src, bl, 6666, 0, skill_id);
+ 					clif_damage(src,bl,tick,0,0,6666,0,0,0);
+ 					sc_start(src,bl,SC_INCATKRATE,100,-50,skill_get_time2(skill_id,skill_lv));
+ 					sc_start(src,bl,SC_INCMATKRATE,100,-50,skill_get_time2(skill_id,skill_lv));
+ 					sc_start(src,bl,SC_CURSE,skill_lv,100,skill_get_time2(skill_id,skill_lv));
+ 					break;
+ 				case 11:	// 4444 damage
+-					status_fix_damage(src, bl, 4444, 0);
++					status_fix_damage(src, bl, 4444, 0,skill_id);
+ 					clif_damage(src,bl,tick,0,0,4444,0,0,0);
+ 					break;
+ 				case 12:	// stun
+ 					sc_start(src,bl,SC_STUN,100,skill_lv,5000);
+ 					break;
+ 				case 13:	// atk,matk,hit,flee,def reduced
+ 					sc_start(src,bl,SC_INCATKRATE,100,-20,skill_get_time2(skill_id,skill_lv));
+@@ -9206,15 +9217,15 @@ int skill_castend_nodamage_id (struct block_list *src, struct block_list *bl, ui
+ 
+ 	case WM_SATURDAY_NIGHT_FEVER:
+ 		if( flag&1 ) {	// Affect to all targets arround the caster and caster too.
+ 			if( !(tsc && tsc->data[type]) )
+ 				sc_start(src,bl, type, 100, skill_lv,skill_get_time(skill_id, skill_lv));
+ 		} else if( flag&2 ) {
+ 			if( src->id != bl->id && battle_check_target(src,bl,BCT_ENEMY) > 0 )
+-				status_fix_damage(src,bl,9999,clif_damage(src,bl,tick,0,0,9999,0,0,0));
++				status_fix_damage(src,bl,9999,clif_damage(src,bl,tick,0,0,9999,0,0,0),skill_id);
+ 		} else if( sd ) {
+ 			short chance = sstatus->int_/6 + sd->status.job_level/5 + skill_lv*4;
+ 			if( !sd->status.party_id || (rnd()%100 > chance)) {
+ 				clif_skill_fail(sd,skill_id,USESKILL_FAIL_NEED_HELPER,0);
+ 				break;
+ 			}
+ 			if( map_foreachinrange(skill_area_sub, bl, skill_get_splash(skill_id,skill_lv),
+@@ -9222,15 +9233,15 @@ int skill_castend_nodamage_id (struct block_list *src, struct block_list *bl, ui
+ 				flag |= 2;
+ 			else
+ 				flag |= 1;
+ 			map_foreachinrange(skill_area_sub, src, skill_get_splash(skill_id,skill_lv),BL_PC, src, skill_id, skill_lv, tick, flag|BCT_ENEMY|BCT_SELF, skill_castend_nodamage_id);
+ 			clif_skill_nodamage(src, bl, skill_id, skill_lv,
+ 				sc_start(src,src,SC_STOP,100,skill_lv,skill_get_time2(skill_id,skill_lv)));
+ 			if( flag&2 ) // Dealed here to prevent conflicts
+-				status_fix_damage(src,bl,9999,clif_damage(src,bl,tick,0,0,9999,0,0,0));
++				status_fix_damage(src,bl,9999,clif_damage(src,bl,tick,0,0,9999,0,0,0),skill_id);
+ 		}
+ 		break;
+ 	case WM_SONG_OF_MANA:
+ 	case WM_DANCE_WITH_WUG:
+ 	case WM_LERADS_DEW:
+ 	case WM_UNLIMITED_HUMMING_VOICE:
+ 		if( flag&1 ) {	// These affect to to all party members near the caster.
+@@ -9928,23 +9939,34 @@ int skill_castend_nodamage_id (struct block_list *src, struct block_list *bl, ui
+ 
+ 	if(skill_id != SR_CURSEDCIRCLE){
+ 		struct status_change *sc = status_get_sc(src);
+ 		if( sc && sc->data[SC_CURSEDCIRCLE_ATKER] )//Should only remove after the skill had been casted.
+ 			status_change_end(src,SC_CURSEDCIRCLE_ATKER,INVALID_TIMER);
+ 	}
+ 
++	if( skill_get_inf(skill_id)&INF_SUPPORT_SKILL && sd && dstsd && sd != dstsd )
++	{
++		if( map_allowed_woe(src->m) && sd->status.guild_id )
++		{
++			if( sd->status.guild_id == dstsd->status.guild_id || guild_isallied(sd->status.guild_id, dstsd->status.guild_id) )
++				add2limit(sd->status.woe_statistics.support_skills_used, 1, UINT_MAX);
++			else
++				add2limit(sd->status.woe_statistics.wrong_support_skills_used, 1, UINT_MAX);
++		}
++	}
++
+ 	if (dstmd) { //Mob skill event for no damage skills (damage ones are handled in battle_calc_damage) [Skotlex]
+ 		mob_log_damage(dstmd, src, 0); //Log interaction (counts as 'attacker' for the exp bonus)
+ 		mobskill_event(dstmd, src, tick, MSC_SKILLUSED|(skill_id<<16));
+ 	}
+ 
+ 	if( sd && !(flag&1) )
+ 	{// ensure that the skill last-cast tick is recorded
+ 		sd->canskill_tick = gettick();
+-
++	
+ 		if( sd->state.arrow_atk )
+ 		{// consume arrow on last invocation to this skill.
+ 			battle_consume_ammo(sd, skill_id, skill_lv);
+ 		}
+ 		skill_onskillusage(sd, bl, skill_id, tick);
+ 		// perform skill requirement consumption
+ 		skill_consume_requirement(sd,skill_id,skill_lv,2);
+@@ -14351,17 +14373,20 @@ int skill_check_condition_castend(struct map_session_data* sd, uint16 skill_id,
+ }
+ 
+ // type&2: consume items (after skill was used)
+ // type&1: consume the others (before skill was used)
+ int skill_consume_requirement( struct map_session_data *sd, uint16 skill_id, uint16 skill_lv, short type)
+ {
+ 	struct skill_condition req;
+-
++	int rankFlag = 0;
+ 	nullpo_ret(sd);
+ 
++	if( map_allowed_woe(sd->bl.m) && sd->status.guild_id )
++		rankFlag = 1;
++
+ 	req = skill_get_requirement(sd,skill_id,skill_lv);
+ 
+ 	if( type&1 ) {
+ 		switch( skill_id ) {
+ 			case CG_TAROTCARD: // TarotCard will consume sp in skill_cast_nodamage_id [Inkfish]
+ 			case MC_IDENTIFY:
+ 			case RL_D_TAIL:
+@@ -14375,28 +14400,43 @@ int skill_consume_requirement( struct map_session_data *sd, uint16 skill_id, uin
+ 				if(sd->state.autocast)
+ 					req.sp = 0;
+ 			break;
+ 		}
+ 		if(req.hp || req.sp)
+ 			status_zap(&sd->bl, req.hp, req.sp);
+ 
++		if( req.sp )
++		{
++			if( rankFlag == 1 )
++				add2limit(sd->status.woe_statistics.sp_used, req.sp, UINT_MAX);
++		}
++
+ 		if(req.spiritball > 0)
++		{
+ 			pc_delspiritball(sd,req.spiritball,0);
++			if( rankFlag == 1 )
++			{
++				add2limit(sd->status.woe_statistics.spiritb_used, req.spiritball, UINT_MAX);
++			}
++		}
+ 		else if(req.spiritball == -1) {
+ 			sd->spiritball_old = sd->spiritball;
+ 			pc_delspiritball(sd,sd->spiritball,0);
+ 		}
+ 
+ 		if(req.zeny > 0)
+ 		{
+ 			if( skill_id == NJ_ZENYNAGE )
+ 				req.zeny = 0; //Zeny is reduced on skill_attack.
+ 			if( sd->status.zeny < req.zeny )
+ 				req.zeny = sd->status.zeny;
+ 			pc_payzeny(sd,req.zeny,LOG_TYPE_CONSUME,NULL);
++
++			if( rankFlag == 1 )
++				add2limit(sd->status.woe_statistics.zeny_used, req.zeny, UINT_MAX);
+ 		}
+ 	}
+ 
+ 	if( type&2 ) {
+ 		struct status_change *sc = &sd->sc;
+ 		int n,i;
+ 
+@@ -14434,14 +14474,33 @@ int skill_consume_requirement( struct map_session_data *sd, uint16 skill_id, uin
+ 					if (sd->flicker)
+ 						continue;
+ 					break;
+ 			}
+ 
+ 			if( (n = pc_search_inventory(sd,req.itemid[i])) >= 0 )
+ 				pc_delitem(sd,n,req.amount[i],0,1,LOG_TYPE_CONSUME);
++
++			if( rankFlag == 1 )
++			{
++				switch( req.itemid[i] )
++				{
++				case ITEMID_POISONBOTTLE:
++						add2limit(sd->status.woe_statistics.poison_bottles, req.amount[i], UINT_MAX);
++					break;
++				case ITEMID_YELLOW_GEMSTONE:
++						add2limit(sd->status.woe_statistics.yellow_gemstones, req.amount[i], UINT_MAX);
++					break;
++				case ITEMID_RED_GEMSTONE:
++						add2limit(sd->status.woe_statistics.red_gemstones, req.amount[i], UINT_MAX);
++					break;
++				case ITEMID_BLUE_GEMSTONE:
++						add2limit(sd->status.woe_statistics.blue_gemstones, req.amount[i], UINT_MAX);
++					break;
++				}
++			}
+ 		}
+ 	}
+ 
+ 	return 1;
+ }
+ 
+ /**
+diff --git a/src/map/status.c b/src/map/status.c
+index b3e1377..e956841 100644
+--- a/src/map/status.c
++++ b/src/map/status.c
+@@ -1230,15 +1230,15 @@ int64 status_charge(struct block_list* bl, int64 hp, int64 sp)
+ *		flag&2: Fail if there is not enough to subtract
+ *		flag&4: Mob does not give EXP/Loot if killed
+ *		flag&8: Used to damage SP of a dead character
+ * @return hp+sp
+ * Note: HP/SP are integer values, not percentages. Values should be
+ *	 calculated either within function call or before
+ **/
+-int status_damage(struct block_list *src,struct block_list *target,int64 dhp, int64 dsp, int walkdelay, int flag)
++int status_damage_(struct block_list *src,struct block_list *target,int64 dhp, int64 dsp, int walkdelay, int flag, int skill)
+ {
+ 	struct status_data *status;
+ 	struct status_change *sc;
+ 	int hp = (int)cap_value(dhp,INT_MIN,INT_MAX);
+ 	int sp = (int)cap_value(dsp,INT_MIN,INT_MAX);
+ 
+ 	if(sp && !(target->type&BL_CONSUME))
+@@ -1342,14 +1342,16 @@ int status_damage(struct block_list *src,struct block_list *target,int64 dhp, in
+ 		case BL_PC:  pc_damage((TBL_PC*)target,src,hp,sp); break;
+ 		case BL_MOB: mob_damage((TBL_MOB*)target, src, hp); break;
+ 		case BL_HOM: merc_damage((TBL_HOM*)target); break;
+ 		case BL_MER: mercenary_heal((TBL_MER*)target,hp,sp); break;
+ 		case BL_ELEM: elemental_heal((TBL_ELEM*)target,hp,sp); break;
+ 	}
+ 
++	pc_record_damage(src, target, hp);
++
+ 	if( src && target->type == BL_PC && ((TBL_PC*)target)->disguise ) { // Stop walking when attacked in disguise to prevent walk-delay bug
+ 		unit_stop_walking( target, 1 );
+ 	}
+ 
+ 	if( status->hp || (flag&8) ) { // Still lives or has been dead before this damage.
+ 		if (walkdelay)
+ 			unit_set_walkdelay(target, gettick(), walkdelay, 0);
+@@ -1361,15 +1363,15 @@ int status_damage(struct block_list *src,struct block_list *target,int64 dhp, in
+ 	* NOTE: These dead functions should return:
+ 	* 0: Death cancelled, auto-revived.
+ 	* Non-zero: Standard death. Clear status, cancel move/attack, etc
+ 	* &2: Remove object from map.
+ 	* &4: Delete object from memory. (One time spawn mobs)
+ 	**/
+ 	switch (target->type) {
+-		case BL_PC:  flag = pc_dead((TBL_PC*)target,src); break;
++		case BL_PC:  flag = pc_dead((TBL_PC*)target,src,skill); break;
+ 		case BL_MOB: flag = mob_dead((TBL_MOB*)target, src, flag&4?3:0); break;
+ 		case BL_HOM: flag = merc_hom_dead((TBL_HOM*)target); break;
+ 		case BL_MER: flag = mercenary_dead((TBL_MER*)target); break;
+ 		case BL_ELEM: flag = elemental_dead((TBL_ELEM*)target); break;
+ 		default:	// Unhandled case, do nothing to object.
+ 			flag = 0;
+ 			break;
+@@ -10422,15 +10424,15 @@ int status_change_end_(struct block_list* bl, enum sc_type type, int tid, const
+ 			sc_start(bl,bl,SC_HALLUCINATIONWALK_POSTDELAY,100,sce->val1,skill_get_time2(GC_HALLUCINATIONWALK,sce->val1));
+ 			break;
+ 		case SC_WHITEIMPRISON:
+ 			{
+ 				struct block_list* src = map_id2bl(sce->val2);
+ 				if( tid == -1 || !src)
+ 					break; // Terminated by Damage
+-				status_fix_damage(src,bl,400*sce->val1,clif_damage(bl,bl,gettick(),0,0,400*sce->val1,0,0,0));
++				status_fix_damage(src,bl,400*sce->val1,clif_damage(bl,bl,gettick(),0,0,400*sce->val1,0,0,0),0);
+ 			}
+ 			break;
+ 		case SC_WUGDASH:
+ 			{
+ 				struct unit_data *ud = unit_bl2ud(bl);
+ 				if (ud) {
+ 					ud->state.running = 0;
+@@ -10951,15 +10953,15 @@ int status_change_timer(int tid, unsigned int tick, int id, intptr_t data)
+ 	case SC_BLEEDING:
+ 		if (--(sce->val4) >= 0) {
+ 			int hp =  rnd()%600 + 200;
+ 			struct block_list* src = map_id2bl(sce->val2);
+ 			if( src && bl && bl->type == BL_MOB )
+ 				mob_log_damage( (TBL_MOB*)bl, src, sd || hp < status->hp ? hp : status->hp - 1 );
+ 			map_freeblock_lock();
+-			status_fix_damage(src, bl, sd||hp<status->hp?hp:status->hp-1, 1);
++			status_fix_damage(src, bl, sd||hp<status->hp?hp:status->hp-1, 1, 0);
+ 			if( sc->data[type] ) {
+ 				if( status->hp == 1 ) {
+ 					map_freeblock_unlock();
+ 					break;
+ 				}
+ 				sc_timer_next(10000 + tick, status_change_timer, bl->id, data);
+ 			}
+@@ -11125,15 +11127,15 @@ int status_change_timer(int tid, unsigned int tick, int id, intptr_t data)
+ 		}
+ 		break;
+ 
+ 	case SC_PYREXIA:
+ 		if( --(sce->val4) >= 0 ) {
+ 			map_freeblock_lock();
+ 			clif_damage(bl,bl,tick,status_get_amotion(bl),status_get_dmotion(bl)+500,100,0,0,0);
+-			status_fix_damage(NULL,bl,100,0);
++			status_fix_damage(NULL,bl,100,0,0);
+ 			if( sc->data[type] ) {
+ 				sc_timer_next(3000+tick,status_change_timer,bl->id,data);
+ 			}
+ 			map_freeblock_unlock();
+ 			return 0;
+ 		}
+ 		break;
+@@ -11459,15 +11461,15 @@ int status_change_timer(int tid, unsigned int tick, int id, intptr_t data)
+ 		break;
+ 
+ 	case SC_OVERHEAT:
+ 		{
+ 			int damage = status->max_hp / 100; // Suggestion 1% each second
+ 			if( damage >= status->hp ) damage = status->hp - 1; // Do not kill, just keep you with 1 hp minimum
+ 			map_freeblock_lock();
+-			status_fix_damage(NULL,bl,damage,clif_damage(bl,bl,tick,0,0,damage,0,0,0));
++			status_fix_damage(NULL,bl,damage,clif_damage(bl,bl,tick,0,0,damage,0,0,0),0);
+ 			if( sc->data[type] ) {
+ 				sc_timer_next(1000 + tick, status_change_timer, bl->id, data);
+ 			}
+ 			map_freeblock_unlock();
+ 		}
+ 		break;
+ 
+diff --git a/src/map/status.h b/src/map/status.h
+index 74b9d90..24174c4 100644
+--- a/src/map/status.h
++++ b/src/map/status.h
+@@ -1824,17 +1824,19 @@ struct status_change {
+ sc_type status_skill2sc(int skill);
+ int status_sc2skill(sc_type sc);
+ unsigned int status_sc2scb_flag(sc_type sc);
+ int status_type2relevant_bl_types(int type);
+ 
+ int StatusIconChangeTable[SC_MAX];          /// status -> "icon" (icon is a bit of a misnomer, since there exist values with no icon associated)
+ 
+-int status_damage(struct block_list *src,struct block_list *target,int64 dhp,int64 dsp, int walkdelay, int flag);
++int status_damage_(struct block_list *src, struct block_list *target, int64 hp, int64 sp, int walkdelay, int flag, int skill);
++//
++#define status_damage(src,target,hp,sp,walkdelay,flag) status_damage_(src,target,hp,sp,walkdelay,flag,0)
+ //Define for standard HP damage attacks.
+-#define status_fix_damage(src, target, hp, walkdelay) status_damage(src, target, hp, 0, walkdelay, 0)
++#define status_fix_damage(src,target,hp,walkdelay,skill) status_damage_(src,target,hp,0,walkdelay,0,skill)
+ //Define for standard HP/SP damage triggers.
+ #define status_zap(bl, hp, sp) status_damage(NULL, bl, hp, sp, 0, 1)
+ //Define for standard HP/SP skill-related cost triggers (mobs require no HP/SP to use skills)
+ int64 status_charge(struct block_list* bl, int64 hp, int64 sp);
+ int status_percent_change(struct block_list *src,struct block_list *target,signed char hp_rate, signed char sp_rate, int flag);
+ //Easier handling of status_percent_change
+ #define status_percent_heal(bl, hp_rate, sp_rate) status_percent_change(NULL, bl, -(hp_rate), -(sp_rate), 0)
